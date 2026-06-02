@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "114221338237",
+    "project_id": "goo-gym-c45bc",
+    "storage_bucket": "goo-gym-c45bc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:114221338237:android:866a27f7a7f63183102b14",
+        "android_client_info": {
+          "package_name": "com.googym.gym_pro_manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtdS0qswIzMOzjLRlT7BNVWzrj65EUYk4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

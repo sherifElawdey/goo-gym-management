@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function adminDoc(uid) {
+      return get(/databases/$(database)/documents/admins/$(uid));
+    }
+
+    function isRegisteredAdmin() {
+      return isAuthed() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return isRegisteredAdmin() &&
+        adminDoc(request.auth.uid).data.role == 'admin';
+    }
+
+    function isAdminOrStaff() {
+      return isRegisteredAdmin() &&
+        adminDoc(request.auth.uid).data.role in ['admin', 'staff'];
+    }
+
+    function gymBootstrapped() {
+      return exists(/databases/$(database)/documents/gym_config/app);
+    }
+
+    // Gym bootstrap marker (created once with first admin).
+    match /gym_config/{docId} {
+      allow read: if isAuthed();
+      allow create: if isAuthed() &&
+        docId == 'app' &&
+        !gymBootstrapped() &&
+        request.resource.data.bootstrappedBy == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Admins collection.
+    match /admins/{uid} {
+      // Any signed-in user can read their own admin profile (role check on login).
+      allow read: if isAuthed() && request.auth.uid == uid;
+      // Admins can read all staff/admin profiles.
+      allow read: if isAdmin();
+
+      // First owner bootstrap: signed-in user creates own admin doc once.
+      allow create: if isAuthed() &&
+        request.auth.uid == uid &&
+        !gymBootstrapped() &&
+        request.resource.data.role == 'admin' &&
+        request.resource.data.email == request.auth.token.email;
+
+      // Admins can add staff/admin accounts after bootstrap.
+      allow create: if isAdmin() &&
+        request.resource.data.role in ['admin', 'staff'] &&
+        request.resource.data.email is string;
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /{collection}/{docId} {
+      allow read, write: if isAdminOrStaff() &&
+        collection in ['users', 'subscriptions', 'attendance', 'expenses', 'monthly_finance'];
+    }
+  }
+}
