@@ -23,4 +23,6 @@ class DashboardCubit extends Cubit<DashboardState> {
       emit(DashboardErrorState(message: AppLogger.userMessage(e)));
     }
   }
+
+  Future<int> backfillUserGender() => _repository.backfillAllUsersGenderToMale();
 }

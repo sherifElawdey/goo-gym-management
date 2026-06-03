@@ -15,6 +15,7 @@ class UsersCubit extends Cubit<UsersState> {
   final GymRepository _repository;
   String query = '';
   String filter = 'all';
+  String genderFilter = 'all';
   DateTime? subscriptionRangeStart;
   DateTime? subscriptionRangeEnd;
 
@@ -26,12 +27,18 @@ class UsersCubit extends Cubit<UsersState> {
   Future<void> _fetchUsers() async {
     try {
       final allUsers = await _repository.loadUsers(query: query, filter: filter);
-      final users = allUsers.where(_matchesSubscriptionDateRange).toList();
+      var users = allUsers.where(_matchesSubscriptionDateRange).toList();
+      if (filter == 'members' && genderFilter != 'all') {
+        users = users
+            .where((u) => u.gender.firestoreValue == genderFilter)
+            .toList();
+      }
       emit(
         UsersLoadedState(
           users: users,
           query: query,
           filter: filter,
+          genderFilter: genderFilter,
           subscriptionRangeStart: subscriptionRangeStart,
           subscriptionRangeEnd: subscriptionRangeEnd,
         ),
@@ -76,6 +83,14 @@ class UsersCubit extends Cubit<UsersState> {
 
   Future<void> setFilter(String value) async {
     filter = value;
+    if (value != 'members') {
+      genderFilter = 'all';
+    }
+    await _fetchUsers();
+  }
+
+  Future<void> setGenderFilter(String value) async {
+    genderFilter = value;
     await _fetchUsers();
   }
 
@@ -134,6 +149,7 @@ class UsersCubit extends Cubit<UsersState> {
     required String name,
     required String phone,
     required DateTime startDate,
+    UserGender gender = UserGender.male,
     double subscriptionFee = AppConstants.defaultMonthlySubscriptionFeeEgp,
     double discount = 0,
   }) async {
@@ -142,6 +158,7 @@ class UsersCubit extends Cubit<UsersState> {
         name: name,
         phone: phone,
         startDate: startDate,
+        gender: gender,
         subscriptionFee: subscriptionFee,
         discount: discount,
       );

@@ -143,6 +143,7 @@
   "memberBadge": "عضو",
   "visitorBadge": "زائر",
   "previousMonth": "الشهر السابق",
+  "currentMonth": "الشهر الحالي",
   "expenses": "المصروفات",
   "netProfit": "صافي الربح",
   "chartRev": "إيراد",
@@ -196,5 +197,33 @@
   "revenueBreakdownSubtitle": "إجمالي الاشتراكات يشمل جميع سجلات الاشتراك في النظام. إيراد الزوار من جلسات اليوم فقط.",
   "allSubscriptions": "جميع الاشتراكات",
   "todayPaidSessions": "جلسات اليوم المدفوعة",
-  "monthExpenses": "مصروفات الشهر"
+  "monthExpenses": "مصروفات الشهر",
+  "biometricPromptShell": "تحقق من هويتك لفتح التطبيق",
+  "biometricPromptFinanceAmounts": "تحقق من هويتك لعرض المبالغ المالية",
+  "showFinanceAmounts": "عرض المبالغ",
+  "financeAmountsHidden": "المبالغ مخفية للخصوصية",
+  "financeChartHidden": "الرسم البياني مخفي حتى عرض المبالغ",
+  "lockScreenTitle": "المحتوى مقفل",
+  "lockScreenSubtitle": "استخدم بصمة الإصبع أو كلمة مرور حسابك للمتابعة",
+  "unlockWithBiometric": "فتح بالبصمة",
+  "unlockWithPassword": "فتح بكلمة المرور",
+  "reenterPasswordTitle": "تأكيد كلمة المرور",
+  "reenterPasswordSubtitle": "أدخل كلمة مرور حسابك للمتابعة",
+  "biometricUnavailable": "البصمة غير متاحة على هذا الجهاز",
+  "biometricFailedTryAgain": "تعذّر التحقق بالبصمة. حاول مرة أخرى أو استخدم كلمة المرور.",
+  "gender": "الجنس",
+  "genderMale": "ذكر",
+  "genderFemale": "أنثى",
+  "filterGenderAll": "كل الأجناس",
+  "maleIncome": "إيراد الذكور",
+  "femaleIncome": "إيراد الإناث",
+  "migrateGenderToMale": "تعيين الجنس (ذكر) للأعضاء الحاليين",
+  "migrateGenderConfirmTitle": "تحديث بيانات الجنس؟",
+  "migrateGenderConfirmMessage": "سيتم تعيين جميع المستخدمين الحاليين كـ «ذكر».",
+  "migrateGenderSuccess": "تم تحديث {count} مستخدم",
+  "@migrateGenderSuccess": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

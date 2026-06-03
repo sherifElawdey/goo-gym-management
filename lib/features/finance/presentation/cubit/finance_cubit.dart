@@ -32,10 +32,13 @@ class FinanceCubit extends Cubit<FinanceState> {
   Future<void> _fetch() async {
     try {
       final dashboard = await _repository.loadDashboardStats();
+      final genderRevenue = await _repository.loadGenderRevenue();
       final expenses = await _repository.loadExpensesByMonth(_selectedMonth);
       _emitLoaded(
         month: _selectedMonth,
         monthlyRevenue: dashboard.monthlyRevenue,
+        maleRevenue: genderRevenue.maleRevenue,
+        femaleRevenue: genderRevenue.femaleRevenue,
         expenses: expenses,
       );
     } catch (e, stackTrace) {
@@ -47,6 +50,8 @@ class FinanceCubit extends Cubit<FinanceState> {
   void _emitLoaded({
     required DateTime month,
     required double monthlyRevenue,
+    required double maleRevenue,
+    required double femaleRevenue,
     required List<Expense> expenses,
   }) {
     final totalExpenses = expenses.fold<double>(0, (sum, e) => sum + e.amount);
@@ -54,6 +59,8 @@ class FinanceCubit extends Cubit<FinanceState> {
       FinanceLoadedState(
         month: month,
         monthlyRevenue: monthlyRevenue,
+        maleRevenue: maleRevenue,
+        femaleRevenue: femaleRevenue,
         currentBalance: monthlyRevenue - totalExpenses,
         totalExpenses: totalExpenses,
         netProfit: monthlyRevenue - totalExpenses,
@@ -80,6 +87,7 @@ class FinanceCubit extends Cubit<FinanceState> {
       _selectedMonth = currentMonth;
 
       final dashboard = await _repository.loadDashboardStats();
+      final genderRevenue = await _repository.loadGenderRevenue();
       if (state is FinanceLoadedState) {
         final loaded = state as FinanceLoadedState;
         final isViewingCurrentMonth =
@@ -90,6 +98,8 @@ class FinanceCubit extends Cubit<FinanceState> {
           _emitLoaded(
             month: currentMonth,
             monthlyRevenue: dashboard.monthlyRevenue,
+            maleRevenue: genderRevenue.maleRevenue,
+            femaleRevenue: genderRevenue.femaleRevenue,
             expenses: expenses,
           );
           return;
@@ -99,6 +109,8 @@ class FinanceCubit extends Cubit<FinanceState> {
       _emitLoaded(
         month: currentMonth,
         monthlyRevenue: dashboard.monthlyRevenue,
+        maleRevenue: genderRevenue.maleRevenue,
+        femaleRevenue: genderRevenue.femaleRevenue,
         expenses: expenses,
       );
     } catch (e, stackTrace) {

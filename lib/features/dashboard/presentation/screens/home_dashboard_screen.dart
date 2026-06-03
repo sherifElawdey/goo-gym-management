@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gym_pro_manager/core/l10n/l10n_ext.dart';
 import 'package:gym_pro_manager/core/theme/app_colors.dart';
 import 'package:gym_pro_manager/core/theme/app_spacing.dart';
+import 'package:gym_pro_manager/core/utils/app_logger.dart';
 import 'package:gym_pro_manager/core/utils/currency_formatter.dart';
 import 'package:gym_pro_manager/core/widgets/app_bottom_sheet.dart';
 import 'package:gym_pro_manager/core/widgets/app_empty_state.dart';
@@ -77,6 +78,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           phone: phone,
           isMember: true,
           createdAt: DateTime.now(),
+          gender: user?.gender ?? UserGender.male,
           activeSubscription: sub,
         );
 
@@ -103,6 +105,42 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       ),
     );
   }
+
+  // Future<void> _runGenderMigration(BuildContext context) async {
+  //   final l10n = context.l10n;
+  //   final confirmed = await showDialog<bool>(
+  //     context: context,
+  //     builder: (dialogContext) => AlertDialog(
+  //       title: Text(l10n.migrateGenderConfirmTitle),
+  //       content: Text(l10n.migrateGenderConfirmMessage),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(dialogContext, false),
+  //           child: Text(l10n.cancel),
+  //         ),
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(dialogContext, true),
+  //           child: Text(l10n.migrateGenderToMale),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  //   if (confirmed != true || !context.mounted) return;
+  //
+  //   try {
+  //     final count = await context.read<DashboardCubit>().backfillUserGender();
+  //     if (!context.mounted) return;
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text(l10n.migrateGenderSuccess(count))),
+  //     );
+  //     await _loadUserNames();
+  //   } catch (e) {
+  //     if (!context.mounted) return;
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text(AppLogger.userMessage(e))),
+  //     );
+  //   }
+  // }
 
   String _greeting(BuildContext context) {
     final l10n = context.l10n;
@@ -151,6 +189,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               Text(_greeting(context), style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 4),
               Text(dateFmt.format(DateTime.now()), style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: AppSpacing.md),
+              // OutlinedButton.icon(
+              //   onPressed: () => _runGenderMigration(context),
+              //   icon: const Icon(Icons.male_rounded),
+              //   label: Text(l10n.migrateGenderToMale),
+              // ),
               const SizedBox(height: AppSpacing.xl),
               LayoutBuilder(
                 builder: (context, constraints) {

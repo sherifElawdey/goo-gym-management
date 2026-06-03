@@ -108,6 +108,16 @@ class AuthCubit extends Cubit<AuthState> {
     emit(UnauthenticatedState());
   }
 
+  Future<void> reauthenticateWithPassword(String password) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final email = user?.email;
+    if (email == null) {
+      throw Exception(AuthMessages.noAdminRole);
+    }
+    final credential = EmailAuthProvider.credential(email: email, password: password);
+    await user!.reauthenticateWithCredential(credential);
+  }
+
   String _friendlyMessage(Object error) => AuthMessages.fromError(error);
 
   @override

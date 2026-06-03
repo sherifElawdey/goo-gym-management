@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gym_pro_manager/core/constants/app_constants.dart';
 import 'package:gym_pro_manager/core/l10n/l10n_ext.dart';
+import 'package:gym_pro_manager/core/theme/app_colors.dart';
 import 'package:gym_pro_manager/core/theme/app_spacing.dart';
 import 'package:gym_pro_manager/core/utils/app_logger.dart';
 import 'package:gym_pro_manager/core/utils/currency_formatter.dart';
@@ -16,7 +17,9 @@ import 'package:gym_pro_manager/core/widgets/glass_card.dart';
 import 'package:gym_pro_manager/core/widgets/gradient_button.dart';
 import 'package:gym_pro_manager/core/widgets/member_avatar.dart';
 import 'package:gym_pro_manager/core/widgets/status_badge.dart';
+import 'package:gym_pro_manager/domain/entities/models.dart';
 import 'package:gym_pro_manager/features/users/presentation/cubit/users_cubit.dart';
+import 'package:gym_pro_manager/features/users/presentation/widgets/gender_selector.dart';
 import 'package:gym_pro_manager/features/users/presentation/widgets/member_profile_sheet.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
@@ -64,6 +67,26 @@ class _UsersScreenState extends State<UsersScreen> {
               options: filters,
               selected: filter,
               onSelected: context.read<UsersCubit>().setFilter,
+            );
+          },
+        ),
+        BlocBuilder<UsersCubit, UsersState>(
+          builder: (context, state) {
+            if (state is! UsersLoadedState || state.filter != 'members') {
+              return const SizedBox.shrink();
+            }
+            final genderFilters = [
+              AppFilterOption(value: 'all', label: l10n.filterGenderAll),
+              AppFilterOption(value: 'male', label: l10n.genderMale),
+              AppFilterOption(value: 'female', label: l10n.genderFemale),
+            ];
+            return Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: AppFilterChips(
+                options: genderFilters,
+                selected: state.genderFilter,
+                onSelected: context.read<UsersCubit>().setGenderFilter,
+              ),
             );
           },
         ),
@@ -180,6 +203,18 @@ class _UsersScreenState extends State<UsersScreen> {
                           ],
                         ),
                       ),
+                      if (user.isMember) ...[
+                        const SizedBox(width: 4),
+                        StatusBadge(
+                          label: user.gender == UserGender.female
+                              ? l10n.genderFemale
+                              : l10n.genderMale,
+                          color: user.gender == UserGender.female
+                              ? AppColors.accentRed
+                              : AppColors.primary,
+                        ),
+                      ],
+                      const SizedBox(width: 4),
                       user.isMember
                           ? StatusBadge.member(context, l10n.memberBadge)
                           : StatusBadge.visitor(context, l10n.visitorBadge),
@@ -218,6 +253,7 @@ class _UsersScreenState extends State<UsersScreen> {
         name: result.name,
         phone: result.phone,
         startDate: result.startDate,
+        gender: result.gender,
         subscriptionFee: result.subscriptionFee,
         discount: result.discount,
       );
@@ -350,6 +386,7 @@ class _AddMemberInput {
     required this.name,
     required this.phone,
     required this.startDate,
+    required this.gender,
     required this.subscriptionFee,
     required this.discount,
   });
@@ -357,6 +394,7 @@ class _AddMemberInput {
   final String name;
   final String phone;
   final DateTime startDate;
+  final UserGender gender;
   final double subscriptionFee;
   final double discount;
 }
@@ -376,6 +414,7 @@ class _AddMemberSheetBodyState extends State<_AddMemberSheetBody> {
   );
   final _discountController = TextEditingController();
   DateTime _startDate = DateTime.now();
+  UserGender _gender = UserGender.male;
 
   @override
   void dispose() {
@@ -454,6 +493,11 @@ class _AddMemberSheetBodyState extends State<_AddMemberSheetBody> {
               ),
         ),
         const SizedBox(height: 12),
+        GenderSelector(
+          selected: _gender,
+          onChanged: (g) => setState(() => _gender = g),
+        ),
+        const SizedBox(height: 12),
         TextField(
           controller: _phoneController,
           textDirection: TextDirection.ltr,
@@ -502,6 +546,7 @@ class _AddMemberSheetBodyState extends State<_AddMemberSheetBody> {
                 name: name,
                 phone: _phoneController.text.trim(),
                 startDate: _startDate,
+                gender: _gender,
                 subscriptionFee: feeValue,
                 discount: discountValue,
               ),

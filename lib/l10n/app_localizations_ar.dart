@@ -381,6 +381,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get previousMonth => 'الشهر السابق';
 
   @override
+  String get currentMonth => 'الشهر الحالي';
+
+  @override
   String get expenses => 'المصروفات';
 
   @override
@@ -549,4 +552,79 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get monthExpenses => 'مصروفات الشهر';
+
+  @override
+  String get biometricPromptShell => 'تحقق من هويتك لفتح التطبيق';
+
+  @override
+  String get biometricPromptFinanceAmounts =>
+      'تحقق من هويتك لعرض المبالغ المالية';
+
+  @override
+  String get showFinanceAmounts => 'عرض المبالغ';
+
+  @override
+  String get financeAmountsHidden => 'المبالغ مخفية للخصوصية';
+
+  @override
+  String get financeChartHidden => 'الرسم البياني مخفي حتى عرض المبالغ';
+
+  @override
+  String get lockScreenTitle => 'المحتوى مقفل';
+
+  @override
+  String get lockScreenSubtitle =>
+      'استخدم بصمة الإصبع أو كلمة مرور حسابك للمتابعة';
+
+  @override
+  String get unlockWithBiometric => 'فتح بالبصمة';
+
+  @override
+  String get unlockWithPassword => 'فتح بكلمة المرور';
+
+  @override
+  String get reenterPasswordTitle => 'تأكيد كلمة المرور';
+
+  @override
+  String get reenterPasswordSubtitle => 'أدخل كلمة مرور حسابك للمتابعة';
+
+  @override
+  String get biometricUnavailable => 'البصمة غير متاحة على هذا الجهاز';
+
+  @override
+  String get biometricFailedTryAgain =>
+      'تعذّر التحقق بالبصمة. حاول مرة أخرى أو استخدم كلمة المرور.';
+
+  @override
+  String get gender => 'الجنس';
+
+  @override
+  String get genderMale => 'ذكر';
+
+  @override
+  String get genderFemale => 'أنثى';
+
+  @override
+  String get filterGenderAll => 'كل الأجناس';
+
+  @override
+  String get maleIncome => 'إيراد الذكور';
+
+  @override
+  String get femaleIncome => 'إيراد الإناث';
+
+  @override
+  String get migrateGenderToMale => 'تعيين الجنس (ذكر) للأعضاء الحاليين';
+
+  @override
+  String get migrateGenderConfirmTitle => 'تحديث بيانات الجنس؟';
+
+  @override
+  String get migrateGenderConfirmMessage =>
+      'سيتم تعيين جميع المستخدمين الحاليين كـ «ذكر».';
+
+  @override
+  String migrateGenderSuccess(int count) {
+    return 'تم تحديث $count مستخدم';
+  }
 }

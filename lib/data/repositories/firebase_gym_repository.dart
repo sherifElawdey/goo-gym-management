@@ -89,6 +89,84 @@ class FirebaseGymRepository implements GymRepository {
   @override
   Future<void> signOut() => _auth.signOut();
 
+  GymUser _gymUserFromDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc, {
+    Subscription? activeSubscription,
+  }) {
+    final data = doc.data();
+    return GymUser(
+      id: doc.id,
+      name: data['name'] as String? ?? '',
+      phone: data['phone'] as String? ?? '',
+      isMember: data['isMember'] as bool? ?? false,
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      gender: UserGenderFirestore.fromFirestore(data['gender'] as String?),
+      activeSubscription: activeSubscription,
+    );
+  }
+
+  Future<Map<String, UserGender>> _genderByUserId() async {
+    final snapshot = await _firestore.collection('users').get();
+    return {
+      for (final doc in snapshot.docs)
+        doc.id: UserGenderFirestore.fromFirestore(doc.data()['gender'] as String?),
+    };
+  }
+
+  @override
+  Future<int> backfillAllUsersGenderToMale() async {
+    final snapshot = await _firestore.collection('users').get();
+    final now = Timestamp.fromDate(DateTime.now());
+    final operations = <void Function(WriteBatch)>[];
+    for (final doc in snapshot.docs) {
+      operations.add(
+        (batch) => batch.update(doc.reference, {
+          'gender': UserGender.male.firestoreValue,
+          'updatedAt': now,
+        }),
+      );
+    }
+    if (operations.isNotEmpty) {
+      await _commitBatches(operations: operations);
+    }
+    return snapshot.docs.length;
+  }
+
+  @override
+  Future<GenderRevenueBreakdown> loadGenderRevenue() async {
+    final genderByUser = await _genderByUserId();
+    final subscriptionsSnap = await _firestore.collection('subscriptions').get();
+    final subscriptions = _parseAllSubscriptions(subscriptionsSnap);
+
+    var maleRevenue = 0.0;
+    var femaleRevenue = 0.0;
+    for (final sub in subscriptions) {
+      final gender = genderByUser[sub.userId] ?? UserGender.male;
+      if (gender == UserGender.female) {
+        femaleRevenue += sub.amount;
+      } else {
+        maleRevenue += sub.amount;
+      }
+    }
+
+    final today = DateTime.now();
+    final todayKey = DateTime(today.year, today.month, today.day);
+    final attendance = await attendanceByDate(todayKey);
+    for (final record in attendance) {
+      final gender = genderByUser[record.userId] ?? UserGender.male;
+      if (gender == UserGender.female) {
+        femaleRevenue += record.amountPaid;
+      } else {
+        maleRevenue += record.amountPaid;
+      }
+    }
+
+    return GenderRevenueBreakdown(
+      maleRevenue: maleRevenue,
+      femaleRevenue: femaleRevenue,
+    );
+  }
+
   Subscription _subscriptionFromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     return Subscription(
@@ -298,6 +376,7 @@ class FirebaseGymRepository implements GymRepository {
       'name': name,
       'phone': phone,
       'isMember': false,
+      'gender': UserGender.male.firestoreValue,
       'createdAt': Timestamp.fromDate(now),
       'updatedAt': Timestamp.fromDate(now),
     });
@@ -331,13 +410,8 @@ class FirebaseGymRepository implements GymRepository {
     final subscriptionsByUser = await _latestSubscriptionsByUser();
     final snapshot = await _firestore.collection('users').orderBy('name').limit(100).get();
     return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return GymUser(
-        id: doc.id,
-        name: data['name'] as String? ?? '',
-        phone: data['phone'] as String? ?? '',
-        isMember: data['isMember'] as bool? ?? false,
-        createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      return _gymUserFromDoc(
+        doc,
         activeSubscription: subscriptionsByUser[doc.id],
       );
     }).where((user) {
@@ -355,6 +429,7 @@ class FirebaseGymRepository implements GymRepository {
     required String name,
     required String phone,
     required DateTime startDate,
+    UserGender gender = UserGender.male,
     double subscriptionFee = AppConstants.defaultMonthlySubscriptionFeeEgp,
     double discount = 0,
   }) async {
@@ -374,6 +449,7 @@ class FirebaseGymRepository implements GymRepository {
       'name': name,
       'phone': phone,
       'isMember': true,
+      'gender': gender.firestoreValue,
       'createdAt': Timestamp.fromDate(now),
       'updatedAt': Timestamp.fromDate(now),
     });

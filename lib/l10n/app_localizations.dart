@@ -814,6 +814,12 @@ abstract class AppLocalizations {
   /// **'الشهر السابق'**
   String get previousMonth;
 
+  /// No description provided for @currentMonth.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشهر الحالي'**
+  String get currentMonth;
+
   /// No description provided for @expenses.
   ///
   /// In ar, this message translates to:
@@ -1137,6 +1143,144 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'مصروفات الشهر'**
   String get monthExpenses;
+
+  /// No description provided for @biometricPromptShell.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحقق من هويتك لفتح التطبيق'**
+  String get biometricPromptShell;
+
+  /// No description provided for @biometricPromptFinanceAmounts.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحقق من هويتك لعرض المبالغ المالية'**
+  String get biometricPromptFinanceAmounts;
+
+  /// No description provided for @showFinanceAmounts.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض المبالغ'**
+  String get showFinanceAmounts;
+
+  /// No description provided for @financeAmountsHidden.
+  ///
+  /// In ar, this message translates to:
+  /// **'المبالغ مخفية للخصوصية'**
+  String get financeAmountsHidden;
+
+  /// No description provided for @financeChartHidden.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرسم البياني مخفي حتى عرض المبالغ'**
+  String get financeChartHidden;
+
+  /// No description provided for @lockScreenTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المحتوى مقفل'**
+  String get lockScreenTitle;
+
+  /// No description provided for @lockScreenSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'استخدم بصمة الإصبع أو كلمة مرور حسابك للمتابعة'**
+  String get lockScreenSubtitle;
+
+  /// No description provided for @unlockWithBiometric.
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح بالبصمة'**
+  String get unlockWithBiometric;
+
+  /// No description provided for @unlockWithPassword.
+  ///
+  /// In ar, this message translates to:
+  /// **'فتح بكلمة المرور'**
+  String get unlockWithPassword;
+
+  /// No description provided for @reenterPasswordTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد كلمة المرور'**
+  String get reenterPasswordTitle;
+
+  /// No description provided for @reenterPasswordSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل كلمة مرور حسابك للمتابعة'**
+  String get reenterPasswordSubtitle;
+
+  /// No description provided for @biometricUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'البصمة غير متاحة على هذا الجهاز'**
+  String get biometricUnavailable;
+
+  /// No description provided for @biometricFailedTryAgain.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر التحقق بالبصمة. حاول مرة أخرى أو استخدم كلمة المرور.'**
+  String get biometricFailedTryAgain;
+
+  /// No description provided for @gender.
+  ///
+  /// In ar, this message translates to:
+  /// **'الجنس'**
+  String get gender;
+
+  /// No description provided for @genderMale.
+  ///
+  /// In ar, this message translates to:
+  /// **'ذكر'**
+  String get genderMale;
+
+  /// No description provided for @genderFemale.
+  ///
+  /// In ar, this message translates to:
+  /// **'أنثى'**
+  String get genderFemale;
+
+  /// No description provided for @filterGenderAll.
+  ///
+  /// In ar, this message translates to:
+  /// **'كل الأجناس'**
+  String get filterGenderAll;
+
+  /// No description provided for @maleIncome.
+  ///
+  /// In ar, this message translates to:
+  /// **'إيراد الذكور'**
+  String get maleIncome;
+
+  /// No description provided for @femaleIncome.
+  ///
+  /// In ar, this message translates to:
+  /// **'إيراد الإناث'**
+  String get femaleIncome;
+
+  /// No description provided for @migrateGenderToMale.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعيين الجنس (ذكر) للأعضاء الحاليين'**
+  String get migrateGenderToMale;
+
+  /// No description provided for @migrateGenderConfirmTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديث بيانات الجنس؟'**
+  String get migrateGenderConfirmTitle;
+
+  /// No description provided for @migrateGenderConfirmMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'سيتم تعيين جميع المستخدمين الحاليين كـ «ذكر».'**
+  String get migrateGenderConfirmMessage;
+
+  /// No description provided for @migrateGenderSuccess.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تحديث {count} مستخدم'**
+  String migrateGenderSuccess(int count);
 }
 
 class _AppLocalizationsDelegate

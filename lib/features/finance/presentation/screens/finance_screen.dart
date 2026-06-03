@@ -20,7 +20,19 @@ import 'package:gym_pro_manager/features/finance/presentation/cubit/finance_cubi
 import 'package:intl/intl.dart' hide TextDirection;
 
 class FinanceScreen extends StatelessWidget {
-  const FinanceScreen({super.key});
+  const FinanceScreen({
+    super.key,
+    required this.amountsVisible,
+    required this.onRevealAmounts,
+  });
+
+  final bool amountsVisible;
+  final Future<bool> Function() onRevealAmounts;
+
+  static bool _isCurrentMonth(DateTime month) {
+    final now = DateTime.now();
+    return month.year == now.year && month.month == now.month;
+  }
 
   IconData _categoryIcon(String key) {
     switch (key) {
@@ -60,6 +72,14 @@ class FinanceScreen extends StatelessWidget {
                   onPressed: () => _showExpenseSheet(context),
                 ),
               ),
+              if (!amountsVisible) ...[
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: () => onRevealAmounts(),
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: Text(l10n.showFinanceAmounts),
+                ),
+              ],
               const SizedBox(width: 8),
               IconButton.filled(
                 onPressed: () => context.read<FinanceCubit>().refresh(),
@@ -107,6 +127,18 @@ class FinanceScreen extends StatelessWidget {
                           selected: true,
                           onSelected: (_) {},
                         ),
+                        if (!_isCurrentMonth(state.month)) ...[
+                          const SizedBox(width: 8),
+                          FilterChip(
+                            label: Text(l10n.currentMonth),
+                            onSelected: (_) {
+                              final now = DateTime.now();
+                              context.read<FinanceCubit>().load(
+                                DateTime(now.year, now.month),
+                              );
+                            },
+                          ),
+                        ],
                         const SizedBox(width: 8),
                         FilterChip(
                           label: Text(l10n.previousMonth),
@@ -130,7 +162,10 @@ class FinanceScreen extends StatelessWidget {
                             width: w,
                             child: KpiStatCard(
                               label: l10n.revenue,
-                              value: CurrencyFormatter.format(state.monthlyRevenue),
+                              value: CurrencyFormatter.formatSensitive(
+                                state.monthlyRevenue,
+                                visible: amountsVisible,
+                              ),
                               icon: Icons.trending_up_rounded,
                               iconColor: AppColors.accentGreen,
                             ),
@@ -139,7 +174,10 @@ class FinanceScreen extends StatelessWidget {
                             width: w,
                             child: KpiStatCard(
                               label: l10n.expenses,
-                              value: CurrencyFormatter.format(state.totalExpenses),
+                              value: CurrencyFormatter.formatSensitive(
+                                state.totalExpenses,
+                                visible: amountsVisible,
+                              ),
                               icon: Icons.trending_down_rounded,
                               iconColor: AppColors.accentRed,
                             ),
@@ -148,7 +186,10 @@ class FinanceScreen extends StatelessWidget {
                             width: w,
                             child: KpiStatCard(
                               label: l10n.netProfit,
-                              value: CurrencyFormatter.format(state.netProfit),
+                              value: CurrencyFormatter.formatSensitive(
+                                state.netProfit,
+                                visible: amountsVisible,
+                              ),
                               icon: Icons.show_chart_rounded,
                               iconColor: AppColors.primary,
                             ),
@@ -157,10 +198,37 @@ class FinanceScreen extends StatelessWidget {
                             width: w,
                             child: KpiStatCard(
                               label: l10n.balance,
-                              value: CurrencyFormatter.format(state.currentBalance),
+                              value: CurrencyFormatter.formatSensitive(
+                                state.currentBalance,
+                                visible: amountsVisible,
+                              ),
                               icon: Icons.account_balance_wallet_rounded,
                               iconColor: balanceColor,
                               valueColor: balanceColor,
+                            ),
+                          ),
+                          SizedBox(
+                            width: w,
+                            child: KpiStatCard(
+                              label: l10n.maleIncome,
+                              value: CurrencyFormatter.formatSensitive(
+                                state.maleRevenue,
+                                visible: amountsVisible,
+                              ),
+                              icon: Icons.male_rounded,
+                              iconColor: AppColors.primary,
+                            ),
+                          ),
+                          SizedBox(
+                            width: w,
+                            child: KpiStatCard(
+                              label: l10n.femaleIncome,
+                              value: CurrencyFormatter.formatSensitive(
+                                state.femaleRevenue,
+                                visible: amountsVisible,
+                              ),
+                              icon: Icons.female_rounded,
+                              iconColor: AppColors.accentRed,
                             ),
                           ),
                         ],
@@ -168,74 +236,99 @@ class FinanceScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  GlassCard(
-                    child: SizedBox(
-                      height: 200,
-                      child: LineChart(
-                        LineChartData(
-                          gridData: FlGridData(
-                            show: true,
-                            drawVerticalLine: false,
-                            getDrawingHorizontalLine: (v) => FlLine(
-                              color: AppColors.border,
-                              strokeWidth: 1,
-                            ),
-                          ),
-                          titlesData: FlTitlesData(
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                getTitlesWidget: (v, _) {
-                                  final labels = [
-                                    l10n.chartRev,
-                                    l10n.chartExp,
-                                    l10n.chartProfit,
-                                    l10n.chartBal,
-                                  ];
-                                  final i = v.toInt();
-                                  if (i < 0 || i >= labels.length) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return Text(
-                                    labels[i],
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(fontSize: 11),
-                                  );
-                                },
+                  if (amountsVisible)
+                    GlassCard(
+                      child: SizedBox(
+                        height: 200,
+                        child: LineChart(
+                          LineChartData(
+                            gridData: FlGridData(
+                              show: true,
+                              drawVerticalLine: false,
+                              getDrawingHorizontalLine: (v) => FlLine(
+                                color: AppColors.border,
+                                strokeWidth: 1,
                               ),
                             ),
-                            leftTitles:
-                                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                            topTitles:
-                                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                            rightTitles:
-                                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          ),
-                          borderData: FlBorderData(show: false),
-                          lineBarsData: [
-                            LineChartBarData(
-                              spots: [
-                                FlSpot(0, state.monthlyRevenue),
-                                FlSpot(1, state.totalExpenses),
-                                FlSpot(2, state.netProfit),
-                                FlSpot(3, state.currentBalance),
-                              ],
-                              isCurved: true,
-                              barWidth: 3,
-                              color: AppColors.primary,
-                              belowBarData: BarAreaData(
-                                show: true,
-                                color: AppColors.primary.withValues(alpha: 0.12),
+                            titlesData: FlTitlesData(
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  getTitlesWidget: (v, _) {
+                                    final labels = [
+                                      l10n.chartRev,
+                                      l10n.chartExp,
+                                      l10n.chartProfit,
+                                      l10n.chartBal,
+                                    ];
+                                    final i = v.toInt();
+                                    if (i < 0 || i >= labels.length) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return Text(
+                                      labels[i],
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(fontSize: 11),
+                                    );
+                                  },
+                                ),
                               ),
-                              dotData: const FlDotData(show: true),
+                              leftTitles:
+                                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              topTitles:
+                                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              rightTitles:
+                                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                             ),
-                          ],
+                            borderData: FlBorderData(show: false),
+                            lineBarsData: [
+                              LineChartBarData(
+                                spots: [
+                                  FlSpot(0, state.monthlyRevenue),
+                                  FlSpot(1, state.totalExpenses),
+                                  FlSpot(2, state.netProfit),
+                                  FlSpot(3, state.currentBalance),
+                                ],
+                                isCurved: true,
+                                barWidth: 3,
+                                color: AppColors.primary,
+                                belowBarData: BarAreaData(
+                                  show: true,
+                                  color: AppColors.primary.withValues(alpha: 0.12),
+                                ),
+                                dotData: const FlDotData(show: true),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    GlassCard(
+                      child: SizedBox(
+                        height: 200,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.lock_outline_rounded,
+                                size: 40,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              Text(
+                                l10n.financeChartHidden,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   const SizedBox(height: AppSpacing.xl),
                   AppSectionHeader(
                     title: l10n.expenses,
@@ -286,7 +379,10 @@ class FinanceScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  CurrencyFormatter.format(e.amount),
+                                  CurrencyFormatter.formatSensitive(
+                                    e.amount,
+                                    visible: amountsVisible,
+                                  ),
                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                         color: AppColors.accentRed,
                                         fontWeight: FontWeight.w700,

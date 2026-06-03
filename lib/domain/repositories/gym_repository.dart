@@ -22,6 +22,10 @@ abstract class GymRepository {
 
   Future<RevenueBreakdown> loadRevenueBreakdown();
 
+  Future<GenderRevenueBreakdown> loadGenderRevenue();
+
+  Future<int> backfillAllUsersGenderToMale();
+
   Future<List<AttendanceRecord>> attendanceByDate(DateTime date, {String? filter});
 
   Future<void> addAttendanceForUser({
@@ -42,6 +46,7 @@ abstract class GymRepository {
     required String name,
     required String phone,
     required DateTime startDate,
+    UserGender gender = UserGender.male,
     double subscriptionFee = AppConstants.defaultMonthlySubscriptionFeeEgp,
     double discount = 0,
   });

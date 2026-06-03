@@ -1,5 +1,14 @@
 import 'package:equatable/equatable.dart';
 
+enum UserGender { male, female }
+
+extension UserGenderFirestore on UserGender {
+  String get firestoreValue => name;
+
+  static UserGender fromFirestore(String? value) =>
+      value == 'female' ? UserGender.female : UserGender.male;
+}
+
 class GymUser extends Equatable {
   const GymUser({
     required this.id,
@@ -7,6 +16,7 @@ class GymUser extends Equatable {
     required this.phone,
     required this.isMember,
     required this.createdAt,
+    this.gender = UserGender.male,
     this.activeSubscription,
   });
 
@@ -15,11 +25,13 @@ class GymUser extends Equatable {
   final String phone;
   final bool isMember;
   final DateTime createdAt;
+  final UserGender gender;
   final Subscription? activeSubscription;
 
   GymUser copyWith({
     Subscription? activeSubscription,
     bool clearSubscription = false,
+    UserGender? gender,
   }) {
     return GymUser(
       id: id,
@@ -27,13 +39,14 @@ class GymUser extends Equatable {
       phone: phone,
       isMember: isMember,
       createdAt: createdAt,
+      gender: gender ?? this.gender,
       activeSubscription:
           clearSubscription ? null : activeSubscription ?? this.activeSubscription,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, phone, isMember, createdAt, activeSubscription];
+  List<Object?> get props => [id, name, phone, isMember, createdAt, gender, activeSubscription];
 }
 
 class Subscription extends Equatable {
@@ -144,6 +157,19 @@ class RevenueBreakdown extends Equatable {
         todayVisitorSessionTotal,
         todaySessions,
       ];
+}
+
+class GenderRevenueBreakdown extends Equatable {
+  const GenderRevenueBreakdown({
+    required this.maleRevenue,
+    required this.femaleRevenue,
+  });
+
+  final double maleRevenue;
+  final double femaleRevenue;
+
+  @override
+  List<Object?> get props => [maleRevenue, femaleRevenue];
 }
 
 class DashboardStats extends Equatable {

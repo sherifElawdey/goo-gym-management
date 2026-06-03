@@ -8,4 +8,7 @@ class CurrencyFormatter {
   );
 
   static String format(num value) => _currency.format(value);
+
+  static String formatSensitive(num value, {required bool visible}) =>
+      visible ? format(value) : '*****';
 }

@@ -159,6 +159,7 @@ class _MemberProfileSheetState extends State<MemberProfileSheet> {
           phone: result.phone,
           isMember: _user.isMember,
           createdAt: _user.createdAt,
+          gender: _user.gender,
           activeSubscription: _user.activeSubscription,
         );
       });

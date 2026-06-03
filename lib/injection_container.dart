@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
+import 'package:gym_pro_manager/core/services/biometric_service.dart';
 import 'package:gym_pro_manager/core/services/notification_service.dart';
 import 'package:gym_pro_manager/data/repositories/firebase_gym_repository.dart';
 import 'package:gym_pro_manager/domain/repositories/gym_repository.dart';
@@ -19,6 +20,7 @@ Future<void> configureDependencies() async {
   sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
   sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
   sl.registerLazySingleton<NotificationService>(() => NotificationService());
+  sl.registerLazySingleton<BiometricService>(() => BiometricService());
 
   sl.registerLazySingleton<GymRepository>(
     () => FirebaseGymRepository(
