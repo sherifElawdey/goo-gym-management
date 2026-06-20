@@ -2,11 +2,14 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get/get.dart';
 import 'package:gym_pro_manager/core/l10n/l10n_ext.dart';
 import 'package:gym_pro_manager/core/services/biometric_service.dart';
+import 'package:gym_pro_manager/core/controllers/theme_controller.dart';
 import 'package:gym_pro_manager/core/theme/app_colors.dart';
 import 'package:gym_pro_manager/core/theme/app_spacing.dart';
 import 'package:gym_pro_manager/core/widgets/branded_app_bar.dart';
+import 'package:gym_pro_manager/core/widgets/theme_mode_icon_buttons.dart';
 import 'package:gym_pro_manager/core/widgets/gradient_background.dart';
 import 'package:gym_pro_manager/features/attendance/presentation/cubit/attendance_cubit.dart';
 import 'package:gym_pro_manager/features/attendance/presentation/screens/attendance_screen.dart';
@@ -177,6 +180,7 @@ class _MainShellScreenState extends State<MainShellScreen> with WidgetsBindingOb
                 gymName: l10n.gymName,
                 actions: [
                   if (_index == 0) ...[
+                    const ThemeModeIconButtons(),
                     IconButton(
                       onPressed: () => shellContext.read<DashboardCubit>().load(),
                       icon: const Icon(Icons.refresh_rounded),
@@ -201,7 +205,6 @@ class _MainShellScreenState extends State<MainShellScreen> with WidgetsBindingOb
                           usersCubit: shellContext.read<UsersCubit>(),
                           onOpenMembersTab: (filter) => _openMembersTab(shellContext, filter),
                           onOpenAttendanceTab: () => _selectTab(1),
-                          onOpenFinanceTab: () => _selectTab(3),
                         ),
                         const AttendanceScreen(),
                         const UsersScreen(),
@@ -240,57 +243,66 @@ class _GlassNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 20),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight.withValues(alpha: 0.95),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: NavigationBar(
-              selectedIndex: index,
-              onDestinationSelected: onChanged,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              height: 64,
-              destinations: [
-                NavigationDestination(
-                  icon: const Icon(Icons.home_outlined),
-                  selectedIcon: const Icon(Icons.home_rounded),
-                  label: labels[0],
-                ),
-                NavigationDestination(
-                  icon: const Icon(Icons.calendar_today_outlined),
-                  selectedIcon: const Icon(Icons.calendar_today_rounded),
-                  label: labels[1],
-                ),
-                NavigationDestination(
-                  icon: const Icon(Icons.people_outline_rounded),
-                  selectedIcon: const Icon(Icons.people_rounded),
-                  label: labels[2],
-                ),
-                NavigationDestination(
-                  icon: const Icon(Icons.account_balance_wallet_outlined),
-                  selectedIcon: const Icon(Icons.account_balance_wallet_rounded),
-                  label: labels[3],
-                ),
-              ],
+    final themeController = Get.find<ThemeController>();
+
+    return Obx(() {
+      final _ = themeController.themeMode.value;
+      final navBarColor = Get.isDarkMode
+          ? AppColors.surfaceDark.withValues(alpha: 0.95)
+          : AppColors.surfaceLight.withValues(alpha: 0.95);
+
+      return Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 16),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: navBarColor,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: NavigationBar(
+                selectedIndex: index,
+                onDestinationSelected: onChanged,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                height: 64,
+                destinations: [
+                  NavigationDestination(
+                    icon: const Icon(Icons.home_outlined),
+                    selectedIcon: const Icon(Icons.home_rounded),
+                    label: labels[0],
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.calendar_today_outlined),
+                    selectedIcon: const Icon(Icons.calendar_today_rounded),
+                    label: labels[1],
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.people_outline_rounded),
+                    selectedIcon: const Icon(Icons.people_rounded),
+                    label: labels[2],
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.account_balance_wallet_outlined),
+                    selectedIcon: const Icon(Icons.account_balance_wallet_rounded),
+                    label: labels[3],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

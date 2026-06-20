@@ -1240,6 +1240,18 @@ abstract class AppLocalizations {
   /// **'أنثى'**
   String get genderFemale;
 
+  /// No description provided for @maleMembers.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعضاء ذكور'**
+  String get maleMembers;
+
+  /// No description provided for @femaleMembers.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعضاء إناث'**
+  String get femaleMembers;
+
   /// No description provided for @filterGenderAll.
   ///
   /// In ar, this message translates to:
@@ -1275,6 +1287,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'سيتم تعيين جميع المستخدمين الحاليين كـ «ذكر».'**
   String get migrateGenderConfirmMessage;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوضع الفاتح'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوضع الداكن'**
+  String get themeDark;
 
   /// No description provided for @migrateGenderSuccess.
   ///

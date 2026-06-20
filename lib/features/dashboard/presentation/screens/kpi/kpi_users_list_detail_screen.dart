@@ -23,12 +23,14 @@ class KpiUsersListDetailScreen extends StatefulWidget {
     required this.filter,
     required this.usersCubit,
     required this.onOpenMembersTab,
+    this.genderFilter,
   });
 
   final String title;
   final String filter;
   final UsersCubit usersCubit;
   final VoidCallback onOpenMembersTab;
+  final String? genderFilter;
 
   @override
   State<KpiUsersListDetailScreen> createState() => _KpiUsersListDetailScreenState();
@@ -51,7 +53,10 @@ class _KpiUsersListDetailScreenState extends State<KpiUsersListDetailScreen> {
       _error = null;
     });
     try {
-      final users = await sl<GymRepository>().loadUsers(filter: widget.filter);
+      final users = await sl<GymRepository>().loadUsers(
+        filter: widget.filter,
+        genderFilter: widget.genderFilter ?? 'all',
+      );
       if (!mounted) return;
       setState(() {
         _users = users;

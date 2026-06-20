@@ -284,6 +284,18 @@ class FirebaseGymRepository implements GymRepository {
     };
     final members = memberIds.length;
     final nonMembers = users.docs.length - members;
+    var maleMembers = 0;
+    var femaleMembers = 0;
+    for (final doc in users.docs) {
+      final data = doc.data();
+      if ((data['isMember'] ?? false) != true) continue;
+      final gender = UserGenderFirestore.fromFirestore(data['gender'] as String?);
+      if (gender == UserGender.female) {
+        femaleMembers++;
+      } else {
+        maleMembers++;
+      }
+    }
     final expiring = <Subscription>[];
 
     final subscriptionsSnap = await _firestore.collection('subscriptions').get();
@@ -312,6 +324,8 @@ class FirebaseGymRepository implements GymRepository {
 
     return DashboardStats(
       totalMembers: members,
+      maleMembers: maleMembers,
+      femaleMembers: femaleMembers,
       totalNonMembers: nonMembers,
       monthlyRevenue: revenue,
       currentBalance: revenue - totalExpenses,
@@ -406,9 +420,13 @@ class FirebaseGymRepository implements GymRepository {
   }
 
   @override
-  Future<List<GymUser>> loadUsers({String query = '', String filter = 'all'}) async {
+  Future<List<GymUser>> loadUsers({
+    String query = '',
+    String filter = 'all',
+    String genderFilter = 'all',
+  }) async {
     final subscriptionsByUser = await _latestSubscriptionsByUser();
-    final snapshot = await _firestore.collection('users').orderBy('name').limit(100).get();
+    final snapshot = await _firestore.collection('users').orderBy('name').get();
     return snapshot.docs.map((doc) {
       return _gymUserFromDoc(
         doc,
@@ -419,7 +437,11 @@ class FirebaseGymRepository implements GymRepository {
       final passesFilter = filter == 'all' ||
           (filter == 'members' && user.isMember) ||
           (filter == 'non_members' && !user.isMember);
+      final passesGender = filter != 'members' ||
+          genderFilter == 'all' ||
+          user.gender.firestoreValue == genderFilter;
       return passesFilter &&
+          passesGender &&
           (q.isEmpty || user.name.toLowerCase().contains(q) || user.phone.contains(q));
     }).toList();
   }

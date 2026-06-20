@@ -14,4 +14,18 @@ void main() {
     );
     expect(model.remainingDays >= 4, isTrue);
   });
+
+  group('UserGenderFirestore.fromFirestore', () {
+    test('parses female variants', () {
+      expect(UserGenderFirestore.fromFirestore('female'), UserGender.female);
+      expect(UserGenderFirestore.fromFirestore('Female'), UserGender.female);
+      expect(UserGenderFirestore.fromFirestore(' female '), UserGender.female);
+    });
+
+    test('defaults to male for missing or other values', () {
+      expect(UserGenderFirestore.fromFirestore(null), UserGender.male);
+      expect(UserGenderFirestore.fromFirestore('male'), UserGender.male);
+      expect(UserGenderFirestore.fromFirestore(''), UserGender.male);
+    });
+  });
 }

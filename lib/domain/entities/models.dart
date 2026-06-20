@@ -6,7 +6,7 @@ extension UserGenderFirestore on UserGender {
   String get firestoreValue => name;
 
   static UserGender fromFirestore(String? value) =>
-      value == 'female' ? UserGender.female : UserGender.male;
+      value?.trim().toLowerCase() == 'female' ? UserGender.female : UserGender.male;
 }
 
 class GymUser extends Equatable {
@@ -175,6 +175,8 @@ class GenderRevenueBreakdown extends Equatable {
 class DashboardStats extends Equatable {
   const DashboardStats({
     required this.totalMembers,
+    required this.maleMembers,
+    required this.femaleMembers,
     required this.totalNonMembers,
     required this.monthlyRevenue,
     required this.currentBalance,
@@ -183,6 +185,8 @@ class DashboardStats extends Equatable {
   });
 
   final int totalMembers;
+  final int maleMembers;
+  final int femaleMembers;
   final int totalNonMembers;
   final double monthlyRevenue;
   final double currentBalance;
@@ -192,6 +196,8 @@ class DashboardStats extends Equatable {
   @override
   List<Object?> get props => [
         totalMembers,
+        maleMembers,
+        femaleMembers,
         totalNonMembers,
         monthlyRevenue,
         currentBalance,

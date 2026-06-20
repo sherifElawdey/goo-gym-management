@@ -605,6 +605,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get genderFemale => 'أنثى';
 
   @override
+  String get maleMembers => 'أعضاء ذكور';
+
+  @override
+  String get femaleMembers => 'أعضاء إناث';
+
+  @override
   String get filterGenderAll => 'كل الأجناس';
 
   @override
@@ -622,6 +628,12 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get migrateGenderConfirmMessage =>
       'سيتم تعيين جميع المستخدمين الحاليين كـ «ذكر».';
+
+  @override
+  String get themeLight => 'الوضع الفاتح';
+
+  @override
+  String get themeDark => 'الوضع الداكن';
 
   @override
   String migrateGenderSuccess(int count) {

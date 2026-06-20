@@ -214,12 +214,16 @@
   "gender": "الجنس",
   "genderMale": "ذكر",
   "genderFemale": "أنثى",
+  "maleMembers": "أعضاء ذكور",
+  "femaleMembers": "أعضاء إناث",
   "filterGenderAll": "كل الأجناس",
   "maleIncome": "إيراد الذكور",
   "femaleIncome": "إيراد الإناث",
   "migrateGenderToMale": "تعيين الجنس (ذكر) للأعضاء الحاليين",
   "migrateGenderConfirmTitle": "تحديث بيانات الجنس؟",
   "migrateGenderConfirmMessage": "سيتم تعيين جميع المستخدمين الحاليين كـ «ذكر».",
+  "themeLight": "الوضع الفاتح",
+  "themeDark": "الوضع الداكن",
   "migrateGenderSuccess": "تم تحديث {count} مستخدم",
   "@migrateGenderSuccess": {
     "placeholders": {

@@ -40,7 +40,11 @@ abstract class GymRepository {
     required DateTime now,
   });
 
-  Future<List<GymUser>> loadUsers({String query = '', String filter = 'all'});
+  Future<List<GymUser>> loadUsers({
+    String query = '',
+    String filter = 'all',
+    String genderFilter = 'all',
+  });
 
   Future<void> addMember({
     required String name,

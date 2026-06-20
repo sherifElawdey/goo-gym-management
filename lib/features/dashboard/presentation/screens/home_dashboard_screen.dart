@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gym_pro_manager/core/l10n/l10n_ext.dart';
 import 'package:gym_pro_manager/core/theme/app_colors.dart';
 import 'package:gym_pro_manager/core/theme/app_spacing.dart';
-import 'package:gym_pro_manager/core/utils/app_logger.dart';
-import 'package:gym_pro_manager/core/utils/currency_formatter.dart';
 import 'package:gym_pro_manager/core/widgets/app_bottom_sheet.dart';
 import 'package:gym_pro_manager/core/widgets/app_empty_state.dart';
 import 'package:gym_pro_manager/core/widgets/app_error_view.dart';
@@ -15,8 +13,6 @@ import 'package:gym_pro_manager/core/widgets/kpi_stat_card.dart';
 import 'package:gym_pro_manager/domain/entities/models.dart';
 import 'package:gym_pro_manager/domain/repositories/gym_repository.dart';
 import 'package:gym_pro_manager/features/dashboard/presentation/cubit/dashboard_cubit.dart';
-import 'package:gym_pro_manager/features/dashboard/presentation/screens/kpi/kpi_balance_detail_screen.dart';
-import 'package:gym_pro_manager/features/dashboard/presentation/screens/kpi/kpi_revenue_detail_screen.dart';
 import 'package:gym_pro_manager/features/dashboard/presentation/screens/kpi/kpi_today_attendance_detail_screen.dart';
 import 'package:gym_pro_manager/features/dashboard/presentation/screens/kpi/kpi_users_list_detail_screen.dart';
 import 'package:gym_pro_manager/features/users/presentation/cubit/users_cubit.dart';
@@ -31,13 +27,11 @@ class HomeDashboardScreen extends StatefulWidget {
     required this.usersCubit,
     required this.onOpenMembersTab,
     required this.onOpenAttendanceTab,
-    required this.onOpenFinanceTab,
   });
 
   final UsersCubit usersCubit;
   final void Function(String filter) onOpenMembersTab;
   final VoidCallback onOpenAttendanceTab;
-  final VoidCallback onOpenFinanceTab;
 
   @override
   State<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
@@ -240,31 +234,47 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       ),
                     ),
                     (
-                      l10n.revenue,
-                      CurrencyFormatter.format(stats.monthlyRevenue),
-                      Icons.trending_up_rounded,
-                      AppColors.accentGreen,
-                      l10n.trendUp,
+                      l10n.maleMembers,
+                      '${stats.maleMembers}',
+                      Icons.male_rounded,
+                      AppColors.primary,
+                      null,
                       null,
                       () => Navigator.push(
                         context,
                         MaterialPageRoute<void>(
-                          builder: (_) => const KpiRevenueDetailScreen(),
+                          builder: (_) => KpiUsersListDetailScreen(
+                            title: l10n.maleMembers,
+                            filter: 'members',
+                            genderFilter: 'male',
+                            usersCubit: widget.usersCubit,
+                            onOpenMembersTab: () {
+                              widget.usersCubit.setMembersGenderFilter('male');
+                              widget.onOpenMembersTab('members');
+                            },
+                          ),
                         ),
                       ),
                     ),
                     (
-                      l10n.balance,
-                      CurrencyFormatter.format(stats.currentBalance),
-                      Icons.account_balance_wallet_rounded,
-                      AppColors.accentAmber,
+                      l10n.femaleMembers,
+                      '${stats.femaleMembers}',
+                      Icons.female_rounded,
+                      AppColors.accentRed,
                       null,
-                      stats.currentBalance >= 0 ? AppColors.accentGreen : AppColors.accentRed,
+                      null,
                       () => Navigator.push(
                         context,
                         MaterialPageRoute<void>(
-                          builder: (_) => KpiBalanceDetailScreen(
-                            onOpenFinanceTab: widget.onOpenFinanceTab,
+                          builder: (_) => KpiUsersListDetailScreen(
+                            title: l10n.femaleMembers,
+                            filter: 'members',
+                            genderFilter: 'female',
+                            usersCubit: widget.usersCubit,
+                            onOpenMembersTab: () {
+                              widget.usersCubit.setMembersGenderFilter('female');
+                              widget.onOpenMembersTab('members');
+                            },
                           ),
                         ),
                       ),

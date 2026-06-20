@@ -26,13 +26,12 @@ class UsersCubit extends Cubit<UsersState> {
 
   Future<void> _fetchUsers() async {
     try {
-      final allUsers = await _repository.loadUsers(query: query, filter: filter);
-      var users = allUsers.where(_matchesSubscriptionDateRange).toList();
-      if (filter == 'members' && genderFilter != 'all') {
-        users = users
-            .where((u) => u.gender.firestoreValue == genderFilter)
-            .toList();
-      }
+      final allUsers = await _repository.loadUsers(
+        query: query,
+        filter: filter,
+        genderFilter: genderFilter,
+      );
+      final users = allUsers.where(_matchesSubscriptionDateRange).toList();
       emit(
         UsersLoadedState(
           users: users,
@@ -90,6 +89,12 @@ class UsersCubit extends Cubit<UsersState> {
   }
 
   Future<void> setGenderFilter(String value) async {
+    genderFilter = value;
+    await _fetchUsers();
+  }
+
+  Future<void> setMembersGenderFilter(String value) async {
+    filter = 'members';
     genderFilter = value;
     await _fetchUsers();
   }
