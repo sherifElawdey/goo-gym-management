@@ -16,6 +16,7 @@ import 'package:gym_pro_manager/core/widgets/app_section_header.dart';
 import 'package:gym_pro_manager/core/widgets/glass_card.dart';
 import 'package:gym_pro_manager/core/widgets/gradient_button.dart';
 import 'package:gym_pro_manager/core/widgets/kpi_stat_card.dart';
+import 'package:gym_pro_manager/core/widgets/status_badge.dart';
 import 'package:gym_pro_manager/features/finance/presentation/cubit/finance_cubit.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
@@ -28,11 +29,6 @@ class FinanceScreen extends StatelessWidget {
 
   final bool amountsVisible;
   final Future<bool> Function() onRevealAmounts;
-
-  static bool _isCurrentMonth(DateTime month) {
-    final now = DateTime.now();
-    return month.year == now.year && month.month == now.month;
-  }
 
   IconData _categoryIcon(String key) {
     switch (key) {
@@ -108,47 +104,19 @@ class FinanceScreen extends StatelessWidget {
                 return const SizedBox.shrink();
               }
 
-              final monthLabel = DateFormat.yMMMM('ar_EG').format(state.month);
               final balanceColor =
                   state.currentBalance >= 0 ? AppColors.accentGreen : AppColors.accentRed;
               final dateFmt = DateFormat.yMMMd('ar_EG');
+              final finance = state.monthlyFinance;
 
               return RefreshIndicator(
                 onRefresh: () => context.read<FinanceCubit>().refresh(),
                 child: ListView(
                 padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 16),
                 children: [
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        FilterChip(
-                          label: Text(monthLabel),
-                          selected: true,
-                          onSelected: (_) {},
-                        ),
-                        if (!_isCurrentMonth(state.month)) ...[
-                          const SizedBox(width: 8),
-                          FilterChip(
-                            label: Text(l10n.currentMonth),
-                            onSelected: (_) {
-                              final now = DateTime.now();
-                              context.read<FinanceCubit>().load(
-                                DateTime(now.year, now.month),
-                              );
-                            },
-                          ),
-                        ],
-                        const SizedBox(width: 8),
-                        FilterChip(
-                          label: Text(l10n.previousMonth),
-                          onSelected: (_) {
-                            final prev = DateTime(state.month.year, state.month.month - 1);
-                            context.read<FinanceCubit>().load(prev);
-                          },
-                        ),
-                      ],
-                    ),
+                  _FinanceMonthDropdown(
+                    selectedMonth: state.month,
+                    onMonthChanged: (month) => context.read<FinanceCubit>().load(month),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   LayoutBuilder(
@@ -331,6 +299,147 @@ class FinanceScreen extends StatelessWidget {
                     ),
                   const SizedBox(height: AppSpacing.xl),
                   AppSectionHeader(
+                    title: l10n.revenueHistory,
+                    badge: '${state.revenueItemCount}',
+                  ),
+                  if (state.revenueItemCount == 0)
+                    AppEmptyState(
+                      title: l10n.noRevenueThisMonth,
+                      subtitle: l10n.revenueBreakdownSubtitle,
+                      icon: Icons.payments_outlined,
+                    )
+                  else ...[
+                    ...finance.subscriptions.map(
+                      (sub) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: GlassCard(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accentGreen.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.card_membership_outlined,
+                                  color: AppColors.accentGreen,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      sub.memberName?.isNotEmpty == true
+                                          ? sub.memberName!
+                                          : l10n.subscriptionPayment,
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                    Text(
+                                      l10n.subscriptionPayment,
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      dateFmt.format(sub.paymentDate),
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                CurrencyFormatter.formatSensitive(
+                                  sub.amount,
+                                  visible: amountsVisible,
+                                ),
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: AppColors.accentGreen,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    ...finance.sessions.map(
+                      (session) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: GlassCard(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.directions_walk_rounded,
+                                  color: AppColors.primary,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      session.userName,
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          l10n.sessionPayment,
+                                          style: Theme.of(context).textTheme.bodyMedium,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        session.userType == 'member'
+                                            ? StatusBadge.member(context, l10n.memberBadge)
+                                            : StatusBadge.visitor(context, l10n.visitorBadge),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      dateFmt.format(session.attendanceDate),
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                CurrencyFormatter.formatSensitive(
+                                  session.amountPaid,
+                                  visible: amountsVisible,
+                                ),
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: AppColors.accentGreen,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.xl),
+                  AppSectionHeader(
                     title: l10n.expenses,
                     badge: '${state.expenses.length}',
                   ),
@@ -434,6 +543,59 @@ class FinanceScreen extends StatelessWidget {
         SnackBar(content: Text(AppLogger.userMessage(e))),
       );
     }
+  }
+}
+
+class _FinanceMonthDropdown extends StatelessWidget {
+  const _FinanceMonthDropdown({
+    required this.selectedMonth,
+    required this.onMonthChanged,
+  });
+
+  final DateTime selectedMonth;
+  final ValueChanged<DateTime> onMonthChanged;
+
+  static String _monthKey(DateTime month) =>
+      '${month.year}-${month.month.toString().padLeft(2, '0')}';
+
+  static List<DateTime> _monthOptions({int count = 24}) {
+    final now = DateTime.now();
+    return List.generate(count, (i) => DateTime(now.year, now.month - i, 1));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final monthFmt = DateFormat.yMMMM('ar_EG');
+    final selectedKey = _monthKey(selectedMonth);
+
+    return DropdownButtonFormField<String>(
+      // ignore: deprecated_member_use
+      value: selectedKey,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: l10n.financeFilterByMonth,
+        isDense: true,
+        prefixIcon: const Icon(Icons.calendar_month_rounded, size: 20),
+      ),
+      items: _monthOptions()
+          .map(
+            (month) => DropdownMenuItem(
+              value: _monthKey(month),
+              child: Text(monthFmt.format(month)),
+            ),
+          )
+          .toList(),
+      onChanged: (value) {
+        if (value == null) return;
+        final parts = value.split('-');
+        if (parts.length != 2) return;
+        final year = int.tryParse(parts[0]);
+        final month = int.tryParse(parts[1]);
+        if (year == null || month == null) return;
+        onMonthChanged(DateTime(year, month, 1));
+      },
+    );
   }
 }
 

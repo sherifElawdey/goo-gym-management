@@ -19,8 +19,8 @@ import 'package:gym_pro_manager/core/widgets/member_avatar.dart';
 import 'package:gym_pro_manager/core/widgets/status_badge.dart';
 import 'package:gym_pro_manager/domain/entities/models.dart';
 import 'package:gym_pro_manager/features/users/presentation/cubit/users_cubit.dart';
+import 'package:gym_pro_manager/features/users/presentation/screens/member_profile_screen.dart';
 import 'package:gym_pro_manager/features/users/presentation/widgets/gender_selector.dart';
-import 'package:gym_pro_manager/features/users/presentation/widgets/member_profile_sheet.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 class UsersScreen extends StatefulWidget {
@@ -93,23 +93,15 @@ class _UsersScreenState extends State<UsersScreen> {
         const SizedBox(height: 8),
         BlocBuilder<UsersCubit, UsersState>(
           builder: (context, state) {
+            if (state is! UsersLoadedState || state.filter != 'members') {
+              return const SizedBox.shrink();
+            }
             final cubit = context.read<UsersCubit>();
-            final rangeStart =
-                state is UsersLoadedState ? state.subscriptionRangeStart : cubit.subscriptionRangeStart;
-            final rangeEnd =
-                state is UsersLoadedState ? state.subscriptionRangeEnd : cubit.subscriptionRangeEnd;
-            return _SubscriptionDateFilter(
-              rangeStart: rangeStart,
-              rangeEnd: rangeEnd,
-              onStartChanged: (d) => cubit.setSubscriptionDateRange(
-                start: d,
-                end: rangeEnd,
-              ),
-              onEndChanged: (d) => cubit.setSubscriptionDateRange(
-                start: rangeStart,
-                end: d,
-              ),
-              onClear: cubit.clearSubscriptionDateRange,
+            return _MembersSubscriptionControls(
+              subscriptionMonth: state.subscriptionMonth,
+              subscriptionSort: state.subscriptionSort,
+              onMonthChanged: cubit.setSubscriptionMonth,
+              onSortChanged: cubit.setSubscriptionSort,
             );
           },
         ),
@@ -135,16 +127,17 @@ class _UsersScreenState extends State<UsersScreen> {
           );
         }
         if (state is! UsersLoadedState || state.users.isEmpty) {
-          final hasDateFilter =
+          final hasMonthFilter =
               state is UsersLoadedState &&
-              (state.subscriptionRangeStart != null || state.subscriptionRangeEnd != null);
+              state.filter == 'members' &&
+              state.subscriptionMonth != null;
           return AppEmptyState(
-            title: state is UsersLoadedState && (state.query.isNotEmpty || hasDateFilter)
+            title: state is UsersLoadedState && (state.query.isNotEmpty || hasMonthFilter)
                 ? l10n.noResultsFound
                 : l10n.noMembersYet,
             subtitle: state is UsersLoadedState && state.query.isNotEmpty
                 ? l10n.tryDifferentSearch
-                : state is UsersLoadedState && hasDateFilter
+                : state is UsersLoadedState && hasMonthFilter
                     ? l10n.tryDifferentSearch
                     : l10n.addMembersFromButton,
             icon: Icons.people_outline_rounded,
@@ -162,17 +155,10 @@ class _UsersScreenState extends State<UsersScreen> {
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: GlassCard(
                   onTap: () {
-                    final usersCubit = context.read<UsersCubit>();
-                    final messengerContext = context;
-                    AppBottomSheet.show(
-                      context: context,
-                      title: user.name,
-                      subtitle: l10n.memberProfile,
-                      child: MemberProfileSheet(
-                        user: user,
-                        usersCubit: usersCubit,
-                        messengerContext: messengerContext,
-                      ),
+                    MemberProfileScreen.open(
+                      context,
+                      user: user,
+                      usersCubit: context.read<UsersCubit>(),
                     );
                   },
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -270,112 +256,112 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 }
 
-class _SubscriptionDateFilter extends StatelessWidget {
-  const _SubscriptionDateFilter({
-    required this.rangeStart,
-    required this.rangeEnd,
-    required this.onStartChanged,
-    required this.onEndChanged,
-    required this.onClear,
+class _MembersSubscriptionControls extends StatelessWidget {
+  const _MembersSubscriptionControls({
+    required this.subscriptionMonth,
+    required this.subscriptionSort,
+    required this.onMonthChanged,
+    required this.onSortChanged,
   });
 
-  final DateTime? rangeStart;
-  final DateTime? rangeEnd;
-  final ValueChanged<DateTime?> onStartChanged;
-  final ValueChanged<DateTime?> onEndChanged;
-  final VoidCallback onClear;
+  final DateTime? subscriptionMonth;
+  final String subscriptionSort;
+  final ValueChanged<DateTime?> onMonthChanged;
+  final ValueChanged<String> onSortChanged;
+
+  static const _allMonthsValue = 'all';
+
+  static String _monthKey(DateTime month) =>
+      '${month.year}-${month.month.toString().padLeft(2, '0')}';
+
+  static DateTime? _monthFromKey(String key) {
+    if (key == _allMonthsValue) return null;
+    final parts = key.split('-');
+    if (parts.length != 2) return null;
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    if (year == null || month == null) return null;
+    return DateTime(year, month, 1);
+  }
+
+  static List<DateTime> _monthOptions({int count = 24}) {
+    final now = DateTime.now();
+    return List.generate(count, (i) => DateTime(now.year, now.month - i, 1));
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final dateFmt = DateFormat.yMMMd('ar_EG');
-    final hasFilter = rangeStart != null || rangeEnd != null;
+    final monthFmt = DateFormat.yMMMM('ar_EG');
+    final selectedMonthKey =
+        subscriptionMonth != null ? _monthKey(subscriptionMonth!) : _allMonthsValue;
 
     return Padding(
       padding: const EdgeInsetsDirectional.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _DateFilterField(
-                  label: l10n.filterSubscriptionFrom,
-                  value: rangeStart != null ? dateFmt.format(rangeStart!) : null,
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: rangeStart ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: rangeEnd ?? DateTime.now().add(const Duration(days: 365 * 2)),
-                      locale: const Locale('ar', 'EG'),
-                    );
-                    if (picked != null) onStartChanged(picked);
-                  },
-                ),
+          DropdownButtonFormField<String>(
+            // ignore: deprecated_member_use
+            value: selectedMonthKey,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: l10n.filterByMonth,
+              isDense: true,
+              prefixIcon: const Icon(Icons.calendar_month_rounded, size: 20),
+            ),
+            items: [
+              DropdownMenuItem(
+                value: _allMonthsValue,
+                child: Text(l10n.clearMonthFilter),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _DateFilterField(
-                  label: l10n.filterSubscriptionTo,
-                  value: rangeEnd != null ? dateFmt.format(rangeEnd!) : null,
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: rangeEnd ?? rangeStart ?? DateTime.now(),
-                      firstDate: rangeStart ?? DateTime(2020),
-                      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-                      locale: const Locale('ar', 'EG'),
-                    );
-                    if (picked != null) onEndChanged(picked);
-                  },
+              ..._monthOptions().map(
+                (month) => DropdownMenuItem(
+                  value: _monthKey(month),
+                  child: Text(monthFmt.format(month)),
                 ),
               ),
             ],
+            onChanged: (value) {
+              if (value == null) return;
+              onMonthChanged(_monthFromKey(value));
+            },
           ),
-          if (hasFilter) ...[
-            const SizedBox(height: 6),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: TextButton.icon(
-                onPressed: onClear,
-                icon: const Icon(Icons.clear_rounded, size: 18),
-                label: Text(l10n.clearDateFilter),
-              ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            // ignore: deprecated_member_use
+            value: subscriptionSort,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: l10n.sortMembersBy,
+              isDense: true,
+              prefixIcon: const Icon(Icons.sort_rounded, size: 20),
             ),
-          ],
+            items: [
+              DropdownMenuItem(value: 'none', child: Text(l10n.sortByDefault)),
+              DropdownMenuItem(
+                value: 'start_asc',
+                child: Text('${l10n.sortByStartDate} — ${l10n.sortAscending}'),
+              ),
+              DropdownMenuItem(
+                value: 'start_desc',
+                child: Text('${l10n.sortByStartDate} — ${l10n.sortDescending}'),
+              ),
+              DropdownMenuItem(
+                value: 'end_asc',
+                child: Text('${l10n.sortByEndDate} — ${l10n.sortAscending}'),
+              ),
+              DropdownMenuItem(
+                value: 'end_desc',
+                child: Text('${l10n.sortByEndDate} — ${l10n.sortDescending}'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              onSortChanged(value);
+            },
+          ),
         ],
-      ),
-    );
-  }
-}
-
-class _DateFilterField extends StatelessWidget {
-  const _DateFilterField({
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final String label;
-  final String? value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          isDense: true,
-          suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
-        ),
-        child: Text(
-          value ?? '—',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
       ),
     );
   }

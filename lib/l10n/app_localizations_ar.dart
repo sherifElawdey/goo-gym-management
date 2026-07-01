@@ -126,7 +126,27 @@ class AppLocalizationsAr extends AppLocalizations {
   String get expiringSoon => 'تنتهي قريباً';
 
   @override
-  String get expiringSoonSubtitle => 'اشتراكات تنتهي خلال ٥ أيام';
+  String get expiringSoonSubtitle => 'اشتراكات تنتهي خلال يومين';
+
+  @override
+  String get subscriptionExpired => 'انتهى الاشتراك';
+
+  @override
+  String get endedSubscriptions => 'اشتراكات منتهية';
+
+  @override
+  String get endedSubscriptionsSubtitle => 'أعضاء لم يُنهَ اشتراكهم بعد';
+
+  @override
+  String get noEndedSubscriptions => 'لا توجد اشتراكات منتهية';
+
+  @override
+  String get subscriptionHistory => 'سجل الاشتراكات';
+
+  @override
+  String endsOnOneDayLeft(String date) {
+    return 'تنتهي $date · متبقي يوم واحد';
+  }
 
   @override
   String get noExpiringSubscriptions => 'لا توجد اشتراكات منتهية قريباً';
@@ -292,6 +312,30 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clearDateFilter => 'مسح التواريخ';
 
   @override
+  String get filterByMonth => 'تصفية حسب الشهر';
+
+  @override
+  String get clearMonthFilter => 'كل الشهور';
+
+  @override
+  String get sortByDefault => 'الترتيب الافتراضي';
+
+  @override
+  String get sortByStartDate => 'ترتيب حسب تاريخ البداية';
+
+  @override
+  String get sortByEndDate => 'ترتيب حسب تاريخ الانتهاء';
+
+  @override
+  String get sortAscending => 'من الأقدم';
+
+  @override
+  String get sortDescending => 'من الأحدث';
+
+  @override
+  String get sortMembersBy => 'ترتيب الأعضاء';
+
+  @override
   String get subscriptionDetails => 'بيانات الاشتراك';
 
   @override
@@ -316,6 +360,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String get renewSubscription => 'تجديد الاشتراك';
 
   @override
+  String get renewSubscriptionDialogTitle => 'تجديد الاشتراك';
+
+  @override
+  String get renewSubscriptionDialogSubtitle =>
+      'حدد تاريخ البداية والانتهاء وقيمة الاشتراك';
+
+  @override
+  String get renewSubscriptionConfirm => 'تأكيد التجديد';
+
+  @override
+  String get renewSubscriptionStartDate => 'تاريخ بداية الاشتراك';
+
+  @override
+  String get renewSubscriptionEndDate => 'تاريخ الانتهاء';
+
+  @override
+  String renewSubscriptionDurationDays(int days) {
+    return 'المدة: $days يوم';
+  }
+
+  @override
+  String get memberSince => 'عضو منذ';
+
+  @override
+  String get currentSubscription => 'الاشتراك الحالي';
+
+  @override
   String get endSubscription => 'إنهاء الاشتراك';
 
   @override
@@ -332,7 +403,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pickNewEndDate => 'اختر تاريخ انتهاء جديد';
 
   @override
-  String get subscriptionRenewed => 'تم تحديث تاريخ انتهاء الاشتراك';
+  String get subscriptionRenewed => 'تم تجديد الاشتراك';
+
+  @override
+  String get subscriptionUpdated => 'تم تحديث الاشتراك';
+
+  @override
+  String get editSubscription => 'تعديل الاشتراك';
+
+  @override
+  String get editSubscriptionSheetTitle => 'تعديل بيانات الاشتراك';
 
   @override
   String get endDateBeforeStart =>
@@ -568,6 +648,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get financeChartHidden => 'الرسم البياني مخفي حتى عرض المبالغ';
+
+  @override
+  String get financeFilterByMonth => 'الشهر';
+
+  @override
+  String get noRevenueThisMonth => 'لا إيرادات هذا الشهر';
+
+  @override
+  String get revenueHistory => 'سجل الإيرادات';
+
+  @override
+  String get subscriptionPayment => 'اشتراك عضو';
+
+  @override
+  String get sessionPayment => 'جلسة حضور';
 
   @override
   String get lockScreenTitle => 'المحتوى مقفل';

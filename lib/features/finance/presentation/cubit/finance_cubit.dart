@@ -31,16 +31,9 @@ class FinanceCubit extends Cubit<FinanceState> {
 
   Future<void> _fetch() async {
     try {
-      final dashboard = await _repository.loadDashboardStats();
-      final genderRevenue = await _repository.loadGenderRevenue();
+      final monthlyFinance = await _repository.loadMonthlyFinance(_selectedMonth);
       final expenses = await _repository.loadExpensesByMonth(_selectedMonth);
-      _emitLoaded(
-        month: _selectedMonth,
-        monthlyRevenue: dashboard.monthlyRevenue,
-        maleRevenue: genderRevenue.maleRevenue,
-        femaleRevenue: genderRevenue.femaleRevenue,
-        expenses: expenses,
-      );
+      _emitLoaded(monthlyFinance: monthlyFinance, expenses: expenses);
     } catch (e, stackTrace) {
       AppLogger.error('FinanceCubit.load', e, stackTrace: stackTrace);
       emit(FinanceErrorState(message: AppLogger.userMessage(e)));
@@ -48,22 +41,21 @@ class FinanceCubit extends Cubit<FinanceState> {
   }
 
   void _emitLoaded({
-    required DateTime month,
-    required double monthlyRevenue,
-    required double maleRevenue,
-    required double femaleRevenue,
+    required MonthlyFinance monthlyFinance,
     required List<Expense> expenses,
   }) {
     final totalExpenses = expenses.fold<double>(0, (sum, e) => sum + e.amount);
+    final revenue = monthlyFinance.totalRevenue;
     emit(
       FinanceLoadedState(
-        month: month,
-        monthlyRevenue: monthlyRevenue,
-        maleRevenue: maleRevenue,
-        femaleRevenue: femaleRevenue,
-        currentBalance: monthlyRevenue - totalExpenses,
+        month: monthlyFinance.month,
+        monthlyFinance: monthlyFinance,
+        monthlyRevenue: revenue,
+        maleRevenue: monthlyFinance.maleRevenue,
+        femaleRevenue: monthlyFinance.femaleRevenue,
+        currentBalance: revenue - totalExpenses,
         totalExpenses: totalExpenses,
-        netProfit: monthlyRevenue - totalExpenses,
+        netProfit: revenue - totalExpenses,
         expenses: expenses,
       ),
     );
@@ -86,8 +78,7 @@ class FinanceCubit extends Cubit<FinanceState> {
       final currentMonth = DateTime(now.year, now.month);
       _selectedMonth = currentMonth;
 
-      final dashboard = await _repository.loadDashboardStats();
-      final genderRevenue = await _repository.loadGenderRevenue();
+      final monthlyFinance = await _repository.loadMonthlyFinance(currentMonth);
       if (state is FinanceLoadedState) {
         final loaded = state as FinanceLoadedState;
         final isViewingCurrentMonth =
@@ -95,24 +86,12 @@ class FinanceCubit extends Cubit<FinanceState> {
         if (isViewingCurrentMonth) {
           final expenses = [expense, ...loaded.expenses]
             ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          _emitLoaded(
-            month: currentMonth,
-            monthlyRevenue: dashboard.monthlyRevenue,
-            maleRevenue: genderRevenue.maleRevenue,
-            femaleRevenue: genderRevenue.femaleRevenue,
-            expenses: expenses,
-          );
+          _emitLoaded(monthlyFinance: monthlyFinance, expenses: expenses);
           return;
         }
       }
       final expenses = await _repository.loadExpensesByMonth(currentMonth);
-      _emitLoaded(
-        month: currentMonth,
-        monthlyRevenue: dashboard.monthlyRevenue,
-        maleRevenue: genderRevenue.maleRevenue,
-        femaleRevenue: genderRevenue.femaleRevenue,
-        expenses: expenses,
-      );
+      _emitLoaded(monthlyFinance: monthlyFinance, expenses: expenses);
     } catch (e, stackTrace) {
       AppLogger.error('FinanceCubit.addExpense', e, stackTrace: stackTrace);
       rethrow;

@@ -6,6 +6,7 @@ class AppConstants {
 
   static const defaultMonthlySubscriptionFeeEgp = 200.0;
   static const defaultSubscriptionDurationDays = 30;
+  static const expiringSoonMaxDays = 2;
 
   static const expenseCategoryKeys = [
     'rent',

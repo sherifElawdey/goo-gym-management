@@ -16,30 +16,46 @@ class UsersCubit extends Cubit<UsersState> {
   String query = '';
   String filter = 'all';
   String genderFilter = 'all';
-  DateTime? subscriptionRangeStart;
-  DateTime? subscriptionRangeEnd;
+  DateTime? subscriptionMonth;
+  String subscriptionSort = 'none';
+
+  static DateTime _currentMonthKey() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, 1);
+  }
 
   Future<void> load() async {
     emit(UsersLoadingState());
+    if (filter == 'members' && subscriptionMonth == null) {
+      subscriptionMonth = _currentMonthKey();
+    }
     await _fetchUsers();
   }
 
   Future<void> _fetchUsers() async {
     try {
-      final allUsers = await _repository.loadUsers(
+      var allUsers = await _repository.loadUsers(
         query: query,
         filter: filter,
         genderFilter: genderFilter,
       );
-      final users = allUsers.where(_matchesSubscriptionDateRange).toList();
+
+      if (filter == 'members' && subscriptionMonth != null) {
+        final monthUserIds =
+            await _repository.userIdsWithSubscriptionInMonth(subscriptionMonth!);
+        allUsers = allUsers.where((u) => monthUserIds.contains(u.id)).toList();
+      }
+
+      final users = _sortUsers(allUsers);
+
       emit(
         UsersLoadedState(
           users: users,
           query: query,
           filter: filter,
           genderFilter: genderFilter,
-          subscriptionRangeStart: subscriptionRangeStart,
-          subscriptionRangeEnd: subscriptionRangeEnd,
+          subscriptionMonth: subscriptionMonth,
+          subscriptionSort: subscriptionSort,
         ),
       );
     } catch (e, stackTrace) {
@@ -48,32 +64,33 @@ class UsersCubit extends Cubit<UsersState> {
     }
   }
 
-  bool _matchesSubscriptionDateRange(GymUser user) {
-    if (subscriptionRangeStart == null && subscriptionRangeEnd == null) {
-      return true;
-    }
-    final sub = user.activeSubscription;
-    if (sub == null) return false;
+  List<GymUser> _sortUsers(List<GymUser> users) {
+    if (subscriptionSort == 'none') return users;
 
-    final subStart = _dayKey(sub.startDate);
-    final subEnd = _dayKey(sub.endDate);
-    final rangeStart =
-        subscriptionRangeStart != null ? _dayKey(subscriptionRangeStart!) : null;
-    final rangeEnd = subscriptionRangeEnd != null ? _dayKey(subscriptionRangeEnd!) : null;
+    final sorted = List<GymUser>.from(users);
+    int compareDates(DateTime? a, DateTime? b) {
+      if (a == null && b == null) return 0;
+      if (a == null) return 1;
+      if (b == null) return -1;
+      return a.compareTo(b);
+    }
 
-    if (rangeStart != null && rangeEnd != null) {
-      return !subStart.isAfter(rangeEnd) && !subEnd.isBefore(rangeStart);
-    }
-    if (rangeStart != null) {
-      return !subEnd.isBefore(rangeStart);
-    }
-    if (rangeEnd != null) {
-      return !subStart.isAfter(rangeEnd);
-    }
-    return true;
+    sorted.sort((a, b) {
+      final subA = a.activeSubscription;
+      final subB = b.activeSubscription;
+      final cmp = switch (subscriptionSort) {
+        'start_asc' => compareDates(subA?.startDate, subB?.startDate),
+        'start_desc' => compareDates(subB?.startDate, subA?.startDate),
+        'end_asc' => compareDates(subA?.endDate, subB?.endDate),
+        'end_desc' => compareDates(subB?.endDate, subA?.endDate),
+        _ => 0,
+      };
+      return cmp != 0 ? cmp : a.name.compareTo(b.name);
+    });
+    return sorted;
   }
 
-  DateTime _dayKey(DateTime d) => DateTime(d.year, d.month, d.day);
+  DateTime _monthKey(DateTime d) => DateTime(d.year, d.month, 1);
 
   Future<void> search(String q) async {
     query = q;
@@ -82,8 +99,12 @@ class UsersCubit extends Cubit<UsersState> {
 
   Future<void> setFilter(String value) async {
     filter = value;
-    if (value != 'members') {
+    if (value == 'members') {
+      subscriptionMonth ??= _currentMonthKey();
+    } else {
       genderFilter = 'all';
+      subscriptionMonth = null;
+      subscriptionSort = 'none';
     }
     await _fetchUsers();
   }
@@ -96,26 +117,47 @@ class UsersCubit extends Cubit<UsersState> {
   Future<void> setMembersGenderFilter(String value) async {
     filter = 'members';
     genderFilter = value;
+    subscriptionMonth ??= _currentMonthKey();
     await _fetchUsers();
   }
 
-  Future<void> setSubscriptionDateRange({
-    DateTime? start,
-    DateTime? end,
-  }) async {
-    subscriptionRangeStart = start != null ? _dayKey(start) : null;
-    subscriptionRangeEnd = end != null ? _dayKey(end) : null;
+  Future<void> setSubscriptionMonth(DateTime? month) async {
+    subscriptionMonth = month != null ? _monthKey(month) : null;
     await _fetchUsers();
   }
 
-  Future<void> clearSubscriptionDateRange() async {
-    subscriptionRangeStart = null;
-    subscriptionRangeEnd = null;
+  Future<void> clearSubscriptionMonth() async {
+    subscriptionMonth = null;
+    await _fetchUsers();
+  }
+
+  Future<void> setSubscriptionSort(String value) async {
+    subscriptionSort = value;
     await _fetchUsers();
   }
 
   Future<List<Subscription>> loadUserSubscriptions(String userId) {
     return _repository.loadSubscriptions(userId);
+  }
+
+  Future<void> updateSubscription({
+    required String subscriptionId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double amount,
+  }) async {
+    try {
+      await _repository.updateSubscription(
+        subscriptionId: subscriptionId,
+        startDate: startDate,
+        endDate: endDate,
+        amount: amount,
+      );
+      await _fetchUsers();
+    } catch (e, stackTrace) {
+      AppLogger.error('UsersCubit.updateSubscription', e, stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
   Future<void> updateSubscriptionEndDate({
@@ -130,6 +172,26 @@ class UsersCubit extends Cubit<UsersState> {
       await _fetchUsers();
     } catch (e, stackTrace) {
       AppLogger.error('UsersCubit.updateSubscriptionEndDate', e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> renewMemberSubscription({
+    required String userId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double amount,
+  }) async {
+    try {
+      await _repository.renewMemberSubscription(
+        userId: userId,
+        startDate: startDate,
+        endDate: endDate,
+        amount: amount,
+      );
+      await _fetchUsers();
+    } catch (e, stackTrace) {
+      AppLogger.error('UsersCubit.renewMemberSubscription', e, stackTrace: stackTrace);
       rethrow;
     }
   }

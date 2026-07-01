@@ -58,6 +58,7 @@ class Subscription extends Equatable {
     required this.amount,
     required this.status,
     this.memberName,
+    this.createdAt,
   });
 
   final String id;
@@ -67,11 +68,52 @@ class Subscription extends Equatable {
   final double amount;
   final String status;
   final String? memberName;
+  final DateTime? createdAt;
+
+  DateTime get paymentDate => createdAt ?? startDate;
 
   int get remainingDays => endDate.difference(DateTime.now()).inDays;
 
+  int remainingDaysFrom(DateTime todayKey) {
+    final endKey = DateTime(endDate.year, endDate.month, endDate.day);
+    return endKey.difference(todayKey).inDays;
+  }
+
   @override
-  List<Object?> get props => [id, userId, startDate, endDate, amount, status, memberName];
+  List<Object?> get props => [id, userId, startDate, endDate, amount, status, memberName, createdAt];
+}
+
+class MonthlyFinance extends Equatable {
+  const MonthlyFinance({
+    required this.month,
+    required this.subscriptionRevenue,
+    required this.sessionRevenue,
+    required this.maleRevenue,
+    required this.femaleRevenue,
+    required this.subscriptions,
+    required this.sessions,
+  });
+
+  final DateTime month;
+  final double subscriptionRevenue;
+  final double sessionRevenue;
+  final double maleRevenue;
+  final double femaleRevenue;
+  final List<Subscription> subscriptions;
+  final List<AttendanceRecord> sessions;
+
+  double get totalRevenue => subscriptionRevenue + sessionRevenue;
+
+  @override
+  List<Object?> get props => [
+        month,
+        subscriptionRevenue,
+        sessionRevenue,
+        maleRevenue,
+        femaleRevenue,
+        subscriptions,
+        sessions,
+      ];
 }
 
 class AttendanceRecord extends Equatable {
@@ -182,6 +224,7 @@ class DashboardStats extends Equatable {
     required this.currentBalance,
     required this.totalAttendanceToday,
     required this.expiringSubscriptions,
+    required this.endedSubscriptions,
   });
 
   final int totalMembers;
@@ -192,6 +235,7 @@ class DashboardStats extends Equatable {
   final double currentBalance;
   final int totalAttendanceToday;
   final List<Subscription> expiringSubscriptions;
+  final List<Subscription> endedSubscriptions;
 
   @override
   List<Object?> get props => [
@@ -203,5 +247,6 @@ class DashboardStats extends Equatable {
         currentBalance,
         totalAttendanceToday,
         expiringSubscriptions,
+        endedSubscriptions,
       ];
 }

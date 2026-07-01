@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gym_pro_manager/core/l10n/l10n_ext.dart';
 import 'package:gym_pro_manager/core/theme/app_spacing.dart';
-import 'package:gym_pro_manager/core/widgets/app_bottom_sheet.dart';
-import 'package:gym_pro_manager/core/widgets/app_empty_state.dart';
+import 'package:gym_pro_manager/features/users/presentation/screens/member_profile_screen.dart';
+import 'package:gym_pro_manager/injection_container.dart';
 import 'package:gym_pro_manager/core/widgets/app_error_view.dart';
 import 'package:gym_pro_manager/core/widgets/app_loading_view.dart';
 import 'package:gym_pro_manager/core/widgets/glass_card.dart';
@@ -12,8 +12,7 @@ import 'package:gym_pro_manager/core/widgets/status_badge.dart';
 import 'package:gym_pro_manager/domain/entities/models.dart';
 import 'package:gym_pro_manager/domain/repositories/gym_repository.dart';
 import 'package:gym_pro_manager/features/users/presentation/cubit/users_cubit.dart';
-import 'package:gym_pro_manager/features/users/presentation/widgets/member_profile_sheet.dart';
-import 'package:gym_pro_manager/injection_container.dart';
+import 'package:gym_pro_manager/core/widgets/app_empty_state.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 class KpiUsersListDetailScreen extends StatefulWidget {
@@ -119,16 +118,10 @@ class _KpiUsersListDetailScreenState extends State<KpiUsersListDetailScreen> {
                                       child: GlassCard(
                                         onTap: user.isMember
                                             ? () {
-                                                final messengerContext = context;
-                                                AppBottomSheet.show(
-                                                  context: context,
-                                                  title: user.name,
-                                                  subtitle: l10n.memberProfile,
-                                                  child: MemberProfileSheet(
-                                                    user: user,
-                                                    usersCubit: widget.usersCubit,
-                                                    messengerContext: messengerContext,
-                                                  ),
+                                                MemberProfileScreen.open(
+                                                  context,
+                                                  user: user,
+                                                  usersCubit: widget.usersCubit,
                                                 );
                                               }
                                             : null,

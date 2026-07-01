@@ -15,20 +15,20 @@ class UsersLoadedState extends UsersState {
     required this.query,
     required this.filter,
     this.genderFilter = 'all',
-    this.subscriptionRangeStart,
-    this.subscriptionRangeEnd,
+    this.subscriptionMonth,
+    this.subscriptionSort = 'none',
   });
 
   final List<GymUser> users;
   final String query;
   final String filter;
   final String genderFilter;
-  final DateTime? subscriptionRangeStart;
-  final DateTime? subscriptionRangeEnd;
+  final DateTime? subscriptionMonth;
+  final String subscriptionSort;
 
   @override
   List<Object?> get props =>
-      [users, query, filter, genderFilter, subscriptionRangeStart, subscriptionRangeEnd];
+      [users, query, filter, genderFilter, subscriptionMonth, subscriptionSort];
 }
 
 class UsersErrorState extends UsersState {

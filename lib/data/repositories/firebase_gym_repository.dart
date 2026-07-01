@@ -167,17 +167,76 @@ class FirebaseGymRepository implements GymRepository {
     );
   }
 
+  @override
+  Future<MonthlyFinance> loadMonthlyFinance(DateTime month) async {
+    final monthKey = DateTime(month.year, month.month, 1);
+    final monthStart = monthKey;
+    final monthEnd = DateTime(month.year, month.month + 1, 1);
+    final genderByUser = await _genderByUserId();
+
+    final subscriptionsSnap = await _firestore.collection('subscriptions').get();
+    final inMonthSubs = <Subscription>[];
+    var subscriptionRevenue = 0.0;
+    var maleRevenue = 0.0;
+    var femaleRevenue = 0.0;
+
+    for (final doc in subscriptionsSnap.docs) {
+      final sub = _subscriptionFromDoc(doc);
+      // Legacy subs without createdAt: attribute payment to startDate month.
+      final paymentDate = sub.paymentDate;
+      if (!_isInMonth(paymentDate, monthStart, monthEnd)) continue;
+
+      inMonthSubs.add(sub);
+      subscriptionRevenue += sub.amount;
+      final gender = genderByUser[sub.userId] ?? UserGender.male;
+      if (gender == UserGender.female) {
+        femaleRevenue += sub.amount;
+      } else {
+        maleRevenue += sub.amount;
+      }
+    }
+    inMonthSubs.sort((a, b) => b.paymentDate.compareTo(a.paymentDate));
+
+    final sessions = await attendanceByMonth(month);
+    var sessionRevenue = 0.0;
+    for (final record in sessions) {
+      sessionRevenue += record.amountPaid;
+      final gender = genderByUser[record.userId] ?? UserGender.male;
+      if (gender == UserGender.female) {
+        femaleRevenue += record.amountPaid;
+      } else {
+        maleRevenue += record.amountPaid;
+      }
+    }
+
+    return MonthlyFinance(
+      month: monthKey,
+      subscriptionRevenue: subscriptionRevenue,
+      sessionRevenue: sessionRevenue,
+      maleRevenue: maleRevenue,
+      femaleRevenue: femaleRevenue,
+      subscriptions: inMonthSubs,
+      sessions: sessions,
+    );
+  }
+
   Subscription _subscriptionFromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
+    final startDate = (data['startDate'] as Timestamp).toDate();
     return Subscription(
       id: doc.id,
       userId: data['userId'] as String,
-      startDate: (data['startDate'] as Timestamp).toDate(),
+      startDate: startDate,
       endDate: (data['endDate'] as Timestamp).toDate(),
       amount: (data['amount'] as num).toDouble(),
       status: data['status'] as String? ?? 'active',
       memberName: data['memberName'] as String?,
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
+  }
+
+  bool _isInMonth(DateTime date, DateTime monthStart, DateTime monthEnd) {
+    return !date.isBefore(monthStart) && date.isBefore(monthEnd);
   }
 
   bool _isSubscriptionEnded(Subscription sub, DateTime todayKey) {
@@ -297,6 +356,7 @@ class FirebaseGymRepository implements GymRepository {
       }
     }
     final expiring = <Subscription>[];
+    final ended = <Subscription>[];
 
     final subscriptionsSnap = await _firestore.collection('subscriptions').get();
     final subscriptions = _parseAllSubscriptions(subscriptionsSnap);
@@ -312,8 +372,10 @@ class FirebaseGymRepository implements GymRepository {
       if (sub.status != 'active') continue;
       final endKey = DateTime(sub.endDate.year, sub.endDate.month, sub.endDate.day);
       final remaining = endKey.difference(todayKey).inDays;
-      if (remaining >= 0 && remaining <= 5) {
+      if (remaining >= 1 && remaining <= AppConstants.expiringSoonMaxDays) {
         expiring.add(sub);
+      } else if (remaining <= 0) {
+        ended.add(sub);
       }
     }
 
@@ -330,7 +392,10 @@ class FirebaseGymRepository implements GymRepository {
       monthlyRevenue: revenue,
       currentBalance: revenue - totalExpenses,
       totalAttendanceToday: attendance.length,
-      expiringSubscriptions: expiring..sort((a, b) => a.remainingDays.compareTo(b.remainingDays)),
+      expiringSubscriptions: expiring
+        ..sort((a, b) => a.remainingDaysFrom(todayKey).compareTo(b.remainingDaysFrom(todayKey))),
+      endedSubscriptions: ended
+        ..sort((a, b) => a.remainingDaysFrom(todayKey).compareTo(b.remainingDaysFrom(todayKey))),
     );
   }
 
@@ -362,6 +427,33 @@ class FirebaseGymRepository implements GymRepository {
 
     filtered.sort((a, b) => b.attendanceTime.compareTo(a.attendanceTime));
     return filtered;
+  }
+
+  @override
+  Future<List<AttendanceRecord>> attendanceByMonth(DateTime month) async {
+    final start = DateTime(month.year, month.month, 1);
+    final end = DateTime(month.year, month.month + 1, 1);
+    final snapshot = await _firestore
+        .collection('attendance')
+        .where('attendanceDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('attendanceDate', isLessThan: Timestamp.fromDate(end))
+        .get();
+
+    final records = snapshot.docs.map((doc) {
+      final data = doc.data();
+      return AttendanceRecord(
+        id: doc.id,
+        userId: data['userId'] as String,
+        userType: data['userType'] as String,
+        attendanceDate: (data['attendanceDate'] as Timestamp).toDate(),
+        attendanceTime: (data['attendanceTime'] as Timestamp).toDate(),
+        amountPaid: (data['amountPaid'] as num? ?? 0).toDouble(),
+        userName: data['userName'] as String? ?? 'Unknown',
+      );
+    }).toList();
+
+    records.sort((a, b) => b.attendanceTime.compareTo(a.attendanceTime));
+    return records;
   }
 
   @override
@@ -576,6 +668,99 @@ class FirebaseGymRepository implements GymRepository {
       'createdAt': FieldValue.serverTimestamp(),
     });
     await _firestore.collection('users').doc(userId).update({'isMember': true});
+  }
+
+  @override
+  Future<void> renewMemberSubscription({
+    required String userId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double amount,
+  }) async {
+    final normalizedStart = DateTime(startDate.year, startDate.month, startDate.day);
+    final normalizedEnd = DateTime(endDate.year, endDate.month, endDate.day);
+    if (normalizedEnd.isBefore(normalizedStart)) {
+      throw ArgumentError('endDate must be on or after startDate');
+    }
+
+    final subscriptionsSnap = await _firestore
+        .collection('subscriptions')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    final batch = _firestore.batch();
+    final expireDate = normalizedStart.subtract(const Duration(days: 1));
+    final today = DateTime.now();
+    final todayKey = DateTime(today.year, today.month, today.day);
+    final status = normalizedEnd.isBefore(todayKey) ? 'expired' : 'active';
+
+    for (final doc in subscriptionsSnap.docs) {
+      if ((doc.data()['status'] as String? ?? '') != 'active') continue;
+      batch.update(doc.reference, {
+        'status': 'expired',
+        'endDate': Timestamp.fromDate(expireDate),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    final newSubRef = _firestore.collection('subscriptions').doc();
+    batch.set(newSubRef, {
+      'userId': userId,
+      'startDate': Timestamp.fromDate(normalizedStart),
+      'endDate': Timestamp.fromDate(normalizedEnd),
+      'amount': amount,
+      'status': status,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    batch.update(_firestore.collection('users').doc(userId), {
+      'isMember': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
+  }
+
+  @override
+  Future<void> updateSubscription({
+    required String subscriptionId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double amount,
+  }) async {
+    final normalizedStart = DateTime(startDate.year, startDate.month, startDate.day);
+    final normalizedEnd = DateTime(endDate.year, endDate.month, endDate.day);
+    if (normalizedEnd.isBefore(normalizedStart)) {
+      throw ArgumentError('endDate must be on or after startDate');
+    }
+    final today = DateTime.now();
+    final todayKey = DateTime(today.year, today.month, today.day);
+    final status = normalizedEnd.isBefore(todayKey) ? 'expired' : 'active';
+    await _firestore.collection('subscriptions').doc(subscriptionId).update({
+      'startDate': Timestamp.fromDate(normalizedStart),
+      'endDate': Timestamp.fromDate(normalizedEnd),
+      'amount': amount,
+      'status': status,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  @override
+  Future<Set<String>> userIdsWithSubscriptionInMonth(DateTime month) async {
+    final monthStart = DateTime(month.year, month.month, 1);
+    final monthEnd = DateTime(month.year, month.month + 1, 0);
+    final snapshot = await _firestore.collection('subscriptions').get();
+    final userIds = <String>{};
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      final start = (data['startDate'] as Timestamp).toDate();
+      final end = (data['endDate'] as Timestamp).toDate();
+      final startKey = DateTime(start.year, start.month, start.day);
+      final endKey = DateTime(end.year, end.month, end.day);
+      if (!startKey.isAfter(monthEnd) && !endKey.isBefore(monthStart)) {
+        final userId = data['userId'] as String?;
+        if (userId != null) userIds.add(userId);
+      }
+    }
+    return userIds;
   }
 
   @override

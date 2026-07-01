@@ -12,6 +12,7 @@ class FinanceLoadingState extends FinanceState {}
 class FinanceLoadedState extends FinanceState {
   FinanceLoadedState({
     required this.month,
+    required this.monthlyFinance,
     required this.monthlyRevenue,
     required this.maleRevenue,
     required this.femaleRevenue,
@@ -22,6 +23,7 @@ class FinanceLoadedState extends FinanceState {
   });
 
   final DateTime month;
+  final MonthlyFinance monthlyFinance;
   final double monthlyRevenue;
   final double maleRevenue;
   final double femaleRevenue;
@@ -30,9 +32,13 @@ class FinanceLoadedState extends FinanceState {
   final double currentBalance;
   final List<Expense> expenses;
 
+  int get revenueItemCount =>
+      monthlyFinance.subscriptions.length + monthlyFinance.sessions.length;
+
   @override
   List<Object?> get props => [
         month,
+        monthlyFinance,
         monthlyRevenue,
         maleRevenue,
         femaleRevenue,

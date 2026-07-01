@@ -24,9 +24,13 @@ abstract class GymRepository {
 
   Future<GenderRevenueBreakdown> loadGenderRevenue();
 
+  Future<MonthlyFinance> loadMonthlyFinance(DateTime month);
+
   Future<int> backfillAllUsersGenderToMale();
 
   Future<List<AttendanceRecord>> attendanceByDate(DateTime date, {String? filter});
+
+  Future<List<AttendanceRecord>> attendanceByMonth(DateTime month);
 
   Future<void> addAttendanceForUser({
     required GymUser user,
@@ -71,6 +75,22 @@ abstract class GymRepository {
     required double amount,
     required DateTime startDate,
   });
+
+  Future<void> renewMemberSubscription({
+    required String userId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double amount,
+  });
+
+  Future<void> updateSubscription({
+    required String subscriptionId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required double amount,
+  });
+
+  Future<Set<String>> userIdsWithSubscriptionInMonth(DateTime month);
 
   Future<void> updateSubscriptionEndDate({
     required String subscriptionId,

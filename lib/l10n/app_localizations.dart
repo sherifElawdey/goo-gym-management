@@ -331,8 +331,44 @@ abstract class AppLocalizations {
   /// No description provided for @expiringSoonSubtitle.
   ///
   /// In ar, this message translates to:
-  /// **'اشتراكات تنتهي خلال ٥ أيام'**
+  /// **'اشتراكات تنتهي خلال يومين'**
   String get expiringSoonSubtitle;
+
+  /// No description provided for @subscriptionExpired.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهى الاشتراك'**
+  String get subscriptionExpired;
+
+  /// No description provided for @endedSubscriptions.
+  ///
+  /// In ar, this message translates to:
+  /// **'اشتراكات منتهية'**
+  String get endedSubscriptions;
+
+  /// No description provided for @endedSubscriptionsSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعضاء لم يُنهَ اشتراكهم بعد'**
+  String get endedSubscriptionsSubtitle;
+
+  /// No description provided for @noEndedSubscriptions.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد اشتراكات منتهية'**
+  String get noEndedSubscriptions;
+
+  /// No description provided for @subscriptionHistory.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل الاشتراكات'**
+  String get subscriptionHistory;
+
+  /// No description provided for @endsOnOneDayLeft.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنتهي {date} · متبقي يوم واحد'**
+  String endsOnOneDayLeft(String date);
 
   /// No description provided for @noExpiringSubscriptions.
   ///
@@ -646,6 +682,54 @@ abstract class AppLocalizations {
   /// **'مسح التواريخ'**
   String get clearDateFilter;
 
+  /// No description provided for @filterByMonth.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصفية حسب الشهر'**
+  String get filterByMonth;
+
+  /// No description provided for @clearMonthFilter.
+  ///
+  /// In ar, this message translates to:
+  /// **'كل الشهور'**
+  String get clearMonthFilter;
+
+  /// No description provided for @sortByDefault.
+  ///
+  /// In ar, this message translates to:
+  /// **'الترتيب الافتراضي'**
+  String get sortByDefault;
+
+  /// No description provided for @sortByStartDate.
+  ///
+  /// In ar, this message translates to:
+  /// **'ترتيب حسب تاريخ البداية'**
+  String get sortByStartDate;
+
+  /// No description provided for @sortByEndDate.
+  ///
+  /// In ar, this message translates to:
+  /// **'ترتيب حسب تاريخ الانتهاء'**
+  String get sortByEndDate;
+
+  /// No description provided for @sortAscending.
+  ///
+  /// In ar, this message translates to:
+  /// **'من الأقدم'**
+  String get sortAscending;
+
+  /// No description provided for @sortDescending.
+  ///
+  /// In ar, this message translates to:
+  /// **'من الأحدث'**
+  String get sortDescending;
+
+  /// No description provided for @sortMembersBy.
+  ///
+  /// In ar, this message translates to:
+  /// **'ترتيب الأعضاء'**
+  String get sortMembersBy;
+
   /// No description provided for @subscriptionDetails.
   ///
   /// In ar, this message translates to:
@@ -694,6 +778,54 @@ abstract class AppLocalizations {
   /// **'تجديد الاشتراك'**
   String get renewSubscription;
 
+  /// No description provided for @renewSubscriptionDialogTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجديد الاشتراك'**
+  String get renewSubscriptionDialogTitle;
+
+  /// No description provided for @renewSubscriptionDialogSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدد تاريخ البداية والانتهاء وقيمة الاشتراك'**
+  String get renewSubscriptionDialogSubtitle;
+
+  /// No description provided for @renewSubscriptionConfirm.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد التجديد'**
+  String get renewSubscriptionConfirm;
+
+  /// No description provided for @renewSubscriptionStartDate.
+  ///
+  /// In ar, this message translates to:
+  /// **'تاريخ بداية الاشتراك'**
+  String get renewSubscriptionStartDate;
+
+  /// No description provided for @renewSubscriptionEndDate.
+  ///
+  /// In ar, this message translates to:
+  /// **'تاريخ الانتهاء'**
+  String get renewSubscriptionEndDate;
+
+  /// No description provided for @renewSubscriptionDurationDays.
+  ///
+  /// In ar, this message translates to:
+  /// **'المدة: {days} يوم'**
+  String renewSubscriptionDurationDays(int days);
+
+  /// No description provided for @memberSince.
+  ///
+  /// In ar, this message translates to:
+  /// **'عضو منذ'**
+  String get memberSince;
+
+  /// No description provided for @currentSubscription.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاشتراك الحالي'**
+  String get currentSubscription;
+
   /// No description provided for @endSubscription.
   ///
   /// In ar, this message translates to:
@@ -727,8 +859,26 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionRenewed.
   ///
   /// In ar, this message translates to:
-  /// **'تم تحديث تاريخ انتهاء الاشتراك'**
+  /// **'تم تجديد الاشتراك'**
   String get subscriptionRenewed;
+
+  /// No description provided for @subscriptionUpdated.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تحديث الاشتراك'**
+  String get subscriptionUpdated;
+
+  /// No description provided for @editSubscription.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل الاشتراك'**
+  String get editSubscription;
+
+  /// No description provided for @editSubscriptionSheetTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل بيانات الاشتراك'**
+  String get editSubscriptionSheetTitle;
 
   /// No description provided for @endDateBeforeStart.
   ///
@@ -1173,6 +1323,36 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الرسم البياني مخفي حتى عرض المبالغ'**
   String get financeChartHidden;
+
+  /// No description provided for @financeFilterByMonth.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشهر'**
+  String get financeFilterByMonth;
+
+  /// No description provided for @noRevenueThisMonth.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا إيرادات هذا الشهر'**
+  String get noRevenueThisMonth;
+
+  /// No description provided for @revenueHistory.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل الإيرادات'**
+  String get revenueHistory;
+
+  /// No description provided for @subscriptionPayment.
+  ///
+  /// In ar, this message translates to:
+  /// **'اشتراك عضو'**
+  String get subscriptionPayment;
+
+  /// No description provided for @sessionPayment.
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسة حضور'**
+  String get sessionPayment;
 
   /// No description provided for @lockScreenTitle.
   ///
