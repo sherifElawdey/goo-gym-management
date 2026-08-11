@@ -140,6 +140,11 @@ class UsersCubit extends Cubit<UsersState> {
     return _repository.loadSubscriptions(userId);
   }
 
+  /// All registered users for add-member name suggestions (does not change list state).
+  Future<List<GymUser>> loadUsersForSuggestion() {
+    return _repository.loadUsers(query: '', filter: 'all');
+  }
+
   Future<void> updateSubscription({
     required String subscriptionId,
     required DateTime startDate,
@@ -256,6 +261,17 @@ class UsersCubit extends Cubit<UsersState> {
       await _fetchUsers();
     } catch (e, stackTrace) {
       AppLogger.error('UsersCubit.deleteUser', e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<int> softDeleteExpiredMembers(List<String> userIds) async {
+    try {
+      final count = await _repository.softDeleteExpiredMembers(userIds);
+      await _fetchUsers();
+      return count;
+    } catch (e, stackTrace) {
+      AppLogger.error('UsersCubit.softDeleteExpiredMembers', e, stackTrace: stackTrace);
       rethrow;
     }
   }

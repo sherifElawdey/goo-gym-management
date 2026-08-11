@@ -17,6 +17,7 @@ class GymUser extends Equatable {
     required this.isMember,
     required this.createdAt,
     this.gender = UserGender.male,
+    this.isDeleted = false,
     this.activeSubscription,
   });
 
@@ -26,27 +27,32 @@ class GymUser extends Equatable {
   final bool isMember;
   final DateTime createdAt;
   final UserGender gender;
+  final bool isDeleted;
   final Subscription? activeSubscription;
 
   GymUser copyWith({
     Subscription? activeSubscription,
     bool clearSubscription = false,
     UserGender? gender,
+    bool? isDeleted,
+    bool? isMember,
   }) {
     return GymUser(
       id: id,
       name: name,
       phone: phone,
-      isMember: isMember,
+      isMember: isMember ?? this.isMember,
       createdAt: createdAt,
       gender: gender ?? this.gender,
+      isDeleted: isDeleted ?? this.isDeleted,
       activeSubscription:
           clearSubscription ? null : activeSubscription ?? this.activeSubscription,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, phone, isMember, createdAt, gender, activeSubscription];
+  List<Object?> get props =>
+      [id, name, phone, isMember, createdAt, gender, isDeleted, activeSubscription];
 }
 
 class Subscription extends Equatable {

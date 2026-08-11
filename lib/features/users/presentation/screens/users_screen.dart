@@ -229,24 +229,51 @@ class _UsersScreenState extends State<UsersScreen> {
       context: context,
       title: l10n.newMemberSheetTitle,
       subtitle: l10n.newMemberSheetSubtitle,
-      child: const _AddMemberSheetBody(),
+      child: _AddMemberSheetBody(usersCubit: cubit),
     );
 
     if (result == null || !context.mounted) return;
 
     try {
-      await cubit.addMember(
-        name: result.name,
-        phone: result.phone,
-        startDate: result.startDate,
-        gender: result.gender,
-        subscriptionFee: result.subscriptionFee,
-        discount: result.discount,
-      );
-      if (!context.mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.memberAddedSuccess)),
-      );
+      if (result.renewUserId != null) {
+        final amount = result.subscriptionFee - result.discount;
+        final startKey = DateTime(
+          result.startDate.year,
+          result.startDate.month,
+          result.startDate.day,
+        );
+        final endDate = startKey.add(
+          const Duration(days: AppConstants.defaultSubscriptionDurationDays),
+        );
+        await cubit.updateUser(
+          userId: result.renewUserId!,
+          name: result.name,
+          phone: result.phone,
+        );
+        await cubit.renewMemberSubscription(
+          userId: result.renewUserId!,
+          startDate: startKey,
+          endDate: endDate,
+          amount: amount,
+        );
+        if (!context.mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.subscriptionRenewed)),
+        );
+      } else {
+        await cubit.addMember(
+          name: result.name,
+          phone: result.phone,
+          startDate: result.startDate,
+          gender: result.gender,
+          subscriptionFee: result.subscriptionFee,
+          discount: result.discount,
+        );
+        if (!context.mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.memberAddedSuccess)),
+        );
+      }
     } catch (e) {
       if (!context.mounted) return;
       messenger.showSnackBar(
@@ -375,6 +402,7 @@ class _AddMemberInput {
     required this.gender,
     required this.subscriptionFee,
     required this.discount,
+    this.renewUserId,
   });
 
   final String name;
@@ -383,10 +411,13 @@ class _AddMemberInput {
   final UserGender gender;
   final double subscriptionFee;
   final double discount;
+  final String? renewUserId;
 }
 
 class _AddMemberSheetBody extends StatefulWidget {
-  const _AddMemberSheetBody();
+  const _AddMemberSheetBody({required this.usersCubit});
+
+  final UsersCubit usersCubit;
 
   @override
   State<_AddMemberSheetBody> createState() => _AddMemberSheetBodyState();
@@ -395,20 +426,109 @@ class _AddMemberSheetBody extends StatefulWidget {
 class _AddMemberSheetBodyState extends State<_AddMemberSheetBody> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _nameFocusNode = FocusNode();
   final _feeController = TextEditingController(
     text: AppConstants.defaultMonthlySubscriptionFeeEgp.toStringAsFixed(0),
   );
   final _discountController = TextEditingController();
   DateTime _startDate = DateTime.now();
   UserGender _gender = UserGender.male;
+  GymUser? _selectedUser;
+  List<GymUser> _candidates = const [];
+  bool _loadingCandidates = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCandidates();
+  }
+
+  Future<void> _loadCandidates() async {
+    try {
+      final users = await widget.usersCubit.loadUsersForSuggestion();
+      if (!mounted) return;
+      setState(() {
+        _candidates = users;
+        _loadingCandidates = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingCandidates = false);
+    }
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _nameFocusNode.dispose();
     _feeController.dispose();
     _discountController.dispose();
     super.dispose();
+  }
+
+  void _selectUser(GymUser user) {
+    final now = DateTime.now();
+    final fee = user.activeSubscription?.amount ??
+        AppConstants.defaultMonthlySubscriptionFeeEgp;
+    setState(() {
+      _selectedUser = user;
+      _nameController.text = user.name;
+      _phoneController.text = user.phone;
+      _gender = user.gender;
+      _startDate = DateTime(now.year, now.month, now.day);
+      _feeController.text = fee.toStringAsFixed(0);
+      _discountController.clear();
+    });
+    _nameFocusNode.unfocus();
+  }
+
+  void _clearSelection() {
+    setState(() => _selectedUser = null);
+  }
+
+  List<GymUser> _filterCandidates(String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty || _selectedUser != null) return const [];
+    return _candidates
+        .where((u) {
+          final name = u.name.toLowerCase();
+          final phone = u.phone.toLowerCase();
+          return name.contains(q) || (phone.isNotEmpty && phone.contains(q));
+        })
+        .take(8)
+        .toList();
+  }
+
+  void _submit() {
+    final l10n = context.l10n;
+    final name = _nameController.text.trim();
+    final feeValue = parseLocalizedDouble(_feeController.text);
+    final discountValue = parseLocalizedDouble(_discountController.text.trim()) ?? 0;
+    if (name.isEmpty) return;
+    if (feeValue == null || feeValue <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.invalidSubscriptionFee)),
+      );
+      return;
+    }
+    if (discountValue < 0 || discountValue > feeValue) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.invalidDiscount)),
+      );
+      return;
+    }
+    Navigator.of(context).pop(
+      _AddMemberInput(
+        name: name,
+        phone: _phoneController.text.trim(),
+        startDate: _startDate,
+        gender: _gender,
+        subscriptionFee: feeValue,
+        discount: discountValue,
+        renewUserId: _selectedUser?.id,
+      ),
+    );
   }
 
   @override
@@ -421,16 +541,97 @@ class _AddMemberSheetBodyState extends State<_AddMemberSheetBody> {
     final endDate = DateTime(_startDate.year, _startDate.month, _startDate.day).add(
       const Duration(days: AppConstants.defaultSubscriptionDurationDays),
     );
+    final isRenew = _selectedUser != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
-          controller: _nameController,
-          decoration: InputDecoration(
-            labelText: l10n.fullNameRequired,
-            prefixIcon: const Icon(Icons.person_outline),
+        if (isRenew) ...[
+          Material(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            child: ListTile(
+              contentPadding: const EdgeInsetsDirectional.only(start: 12, end: 4),
+              leading: const Icon(Icons.autorenew_rounded, color: AppColors.primary),
+              title: Text(l10n.renewExistingMemberBanner(_selectedUser!.name)),
+              subtitle: Text(l10n.renewExistingMemberTitle),
+              trailing: IconButton(
+                onPressed: _clearSelection,
+                icon: const Icon(Icons.close_rounded),
+                tooltip: l10n.clearSelectedMember,
+              ),
+            ),
           ),
+          const SizedBox(height: 12),
+        ],
+        RawAutocomplete<GymUser>(
+          textEditingController: _nameController,
+          focusNode: _nameFocusNode,
+          optionsBuilder: (TextEditingValue value) {
+            if (_loadingCandidates || isRenew) {
+              return const Iterable<GymUser>.empty();
+            }
+            return _filterCandidates(value.text);
+          },
+          displayStringForOption: (user) => user.name,
+          onSelected: _selectUser,
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            return TextField(
+              controller: controller,
+              focusNode: focusNode,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                labelText: l10n.fullNameRequired,
+                hintText: l10n.memberSuggestionsHint,
+                prefixIcon: const Icon(Icons.person_outline),
+                suffixIcon: _loadingCandidates
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : null,
+              ),
+            );
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            final list = options.toList();
+            if (list.isEmpty) return const SizedBox.shrink();
+            return Align(
+              alignment: AlignmentDirectional.topStart,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(12),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 240, minWidth: 280),
+                  child: ListView.separated(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: list.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final user = list[index];
+                      return ListTile(
+                        dense: true,
+                        leading: MemberAvatar(name: user.name, size: 36),
+                        title: Text(user.name),
+                        subtitle: user.phone.isEmpty
+                            ? null
+                            : Text(user.phone, textDirection: TextDirection.ltr),
+                        trailing: user.isMember
+                            ? StatusBadge.member(context, l10n.memberBadge)
+                            : StatusBadge.visitor(context, l10n.visitorBadge),
+                        onTap: () => onSelected(user),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 12),
         InkWell(
@@ -508,38 +709,12 @@ class _AddMemberSheetBodyState extends State<_AddMemberSheetBody> {
         ),
         const SizedBox(height: 20),
         GradientButton(
-          label: l10n.saveMember,
-          icon: Icons.check_rounded,
-          onPressed: () {
-            final name = _nameController.text.trim();
-            final feeValue = parseLocalizedDouble(_feeController.text);
-            final discountValue = parseLocalizedDouble(_discountController.text.trim()) ?? 0;
-            if (name.isEmpty) return;
-            if (feeValue == null || feeValue <= 0) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.invalidSubscriptionFee)),
-              );
-              return;
-            }
-            if (discountValue < 0 || discountValue > feeValue) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.invalidDiscount)),
-              );
-              return;
-            }
-            Navigator.of(context).pop(
-              _AddMemberInput(
-                name: name,
-                phone: _phoneController.text.trim(),
-                startDate: _startDate,
-                gender: _gender,
-                subscriptionFee: feeValue,
-                discount: discountValue,
-              ),
-            );
-          },
+          label: isRenew ? l10n.renewSubscription : l10n.saveMember,
+          icon: isRenew ? Icons.autorenew_rounded : Icons.check_rounded,
+          onPressed: _submit,
         ),
       ],
     );
   }
 }
+

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gym_pro_manager/core/l10n/l10n_ext.dart';
+import 'package:gym_pro_manager/core/theme/app_colors.dart';
 import 'package:gym_pro_manager/core/theme/app_spacing.dart';
 import 'package:gym_pro_manager/core/utils/app_logger.dart';
 import 'package:gym_pro_manager/features/users/presentation/screens/member_profile_screen.dart';
@@ -34,6 +35,7 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
   String? _error;
   bool _loading = true;
   String? _endingSubscriptionId;
+  bool _deletingAll = false;
 
   @override
   void initState() {
@@ -94,7 +96,7 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
   Future<void> _confirmEndSubscription(BuildContext context, Subscription sub) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
-    if (_endingSubscriptionId != null) return;
+    if (_endingSubscriptionId != null || _deletingAll) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -135,6 +137,55 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
     } finally {
       if (mounted) {
         setState(() => _endingSubscriptionId = null);
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteAllExpired(BuildContext context) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    if (_deletingAll || _endingSubscriptionId != null || _subscriptions.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteAllExpiredConfirmTitle),
+        content: Text(l10n.deleteAllExpiredConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              l10n.deleteAllExpiredMembers,
+              style: const TextStyle(color: AppColors.accentRed),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final userIds = _subscriptions.map((s) => s.userId).toSet().toList();
+    setState(() => _deletingAll = true);
+    try {
+      final count = await widget.usersCubit.softDeleteExpiredMembers(userIds);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.deleteAllExpiredSuccess(count))),
+      );
+      widget.onDataChanged?.call();
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(AppLogger.userMessage(e))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _deletingAll = false);
       }
     }
   }
@@ -180,6 +231,24 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                             const SizedBox(height: AppSpacing.md),
+                            OutlinedButton.icon(
+                              onPressed: _deletingAll
+                                  ? null
+                                  : () => _confirmDeleteAllExpired(context),
+                              icon: _deletingAll
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.delete_sweep_outlined),
+                              label: Text(l10n.deleteAllExpiredMembers),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.accentRed,
+                                side: const BorderSide(color: AppColors.accentRed),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
                             ..._subscriptions.map((sub) {
                               final user = _usersById[sub.userId];
                               final name = user?.name ?? l10n.memberDefault;
@@ -190,8 +259,10 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
                                 phone: phone,
                                 kind: SubscriptionAlertKind.ended,
                                 ending: _endingSubscriptionId == sub.id,
-                                onTap: () => _openProfile(context, sub),
-                                onEndSubscription: () => _confirmEndSubscription(context, sub),
+                                onTap: _deletingAll ? null : () => _openProfile(context, sub),
+                                onEndSubscription: _deletingAll
+                                    ? null
+                                    : () => _confirmEndSubscription(context, sub),
                               );
                             }),
                           ],

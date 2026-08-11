@@ -586,6 +586,30 @@ abstract class AppLocalizations {
   /// **'تسجيل اشتراك شهري'**
   String get newMemberSheetSubtitle;
 
+  /// No description provided for @renewExistingMemberTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجديد عضوية موجودة'**
+  String get renewExistingMemberTitle;
+
+  /// No description provided for @renewExistingMemberBanner.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجديد: {name}'**
+  String renewExistingMemberBanner(String name);
+
+  /// No description provided for @clearSelectedMember.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء الاختيار'**
+  String get clearSelectedMember;
+
+  /// No description provided for @memberSuggestionsHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب للبحث عن عضو مسجل'**
+  String get memberSuggestionsHint;
+
   /// No description provided for @subscriptionStartDate.
   ///
   /// In ar, this message translates to:
@@ -927,6 +951,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'سيتم حذف المستخدم وسجل حضوره. الاشتراكات المنتهية تبقى في السجلات المالية. تُحذف الاشتراكات النشطة فقط. لا يمكن التراجع عن هذا الإجراء.'**
   String get deleteUserConfirmMessage;
+
+  /// No description provided for @deleteAllExpiredMembers.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف كل الأعضاء المنتهية'**
+  String get deleteAllExpiredMembers;
+
+  /// No description provided for @deleteAllExpiredConfirmTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف كل الأعضاء المنتهية؟'**
+  String get deleteAllExpiredConfirmTitle;
+
+  /// No description provided for @deleteAllExpiredConfirmMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'سيتم إخفاء هؤلاء الأعضاء من التطبيق. سجلات الإيرادات والمالية تبقى كما هي.'**
+  String get deleteAllExpiredConfirmMessage;
+
+  /// No description provided for @deleteAllExpiredSuccess.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حذف {count} عضو منتهي'**
+  String deleteAllExpiredSuccess(int count);
 
   /// No description provided for @userUpdatedSuccess.
   ///

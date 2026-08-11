@@ -99,6 +99,15 @@
   "addMember": "إضافة عضو",
   "newMemberSheetTitle": "عضو جديد",
   "newMemberSheetSubtitle": "تسجيل اشتراك شهري",
+  "renewExistingMemberTitle": "تجديد عضوية موجودة",
+  "renewExistingMemberBanner": "تجديد: {name}",
+  "@renewExistingMemberBanner": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "clearSelectedMember": "إلغاء الاختيار",
+  "memberSuggestionsHint": "اكتب للبحث عن عضو مسجل",
   "subscriptionStartDate": "تاريخ بداية الاشتراك",
   "discountOptional": "خصم (اختياري)",
   "subscriptionFee": "رسوم الاشتراك",
@@ -172,6 +181,15 @@
   "saveChanges": "حفظ التعديلات",
   "deleteUserConfirmTitle": "حذف المستخدم؟",
   "deleteUserConfirmMessage": "سيتم حذف المستخدم وسجل حضوره. الاشتراكات المنتهية تبقى في السجلات المالية. تُحذف الاشتراكات النشطة فقط. لا يمكن التراجع عن هذا الإجراء.",
+  "deleteAllExpiredMembers": "حذف كل الأعضاء المنتهية",
+  "deleteAllExpiredConfirmTitle": "حذف كل الأعضاء المنتهية؟",
+  "deleteAllExpiredConfirmMessage": "سيتم إخفاء هؤلاء الأعضاء من التطبيق. سجلات الإيرادات والمالية تبقى كما هي.",
+  "deleteAllExpiredSuccess": "تم حذف {count} عضو منتهي",
+  "@deleteAllExpiredSuccess": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "userUpdatedSuccess": "تم تحديث بيانات المستخدم",
   "userDeletedSuccess": "تم حذف المستخدم",
   "nameRequired": "الاسم مطلوب",

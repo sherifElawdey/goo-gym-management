@@ -261,6 +261,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get newMemberSheetSubtitle => 'تسجيل اشتراك شهري';
 
   @override
+  String get renewExistingMemberTitle => 'تجديد عضوية موجودة';
+
+  @override
+  String renewExistingMemberBanner(String name) {
+    return 'تجديد: $name';
+  }
+
+  @override
+  String get clearSelectedMember => 'إلغاء الاختيار';
+
+  @override
+  String get memberSuggestionsHint => 'اكتب للبحث عن عضو مسجل';
+
+  @override
   String get subscriptionStartDate => 'تاريخ بداية الاشتراك';
 
   @override
@@ -441,6 +455,21 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get deleteUserConfirmMessage =>
       'سيتم حذف المستخدم وسجل حضوره. الاشتراكات المنتهية تبقى في السجلات المالية. تُحذف الاشتراكات النشطة فقط. لا يمكن التراجع عن هذا الإجراء.';
+
+  @override
+  String get deleteAllExpiredMembers => 'حذف كل الأعضاء المنتهية';
+
+  @override
+  String get deleteAllExpiredConfirmTitle => 'حذف كل الأعضاء المنتهية؟';
+
+  @override
+  String get deleteAllExpiredConfirmMessage =>
+      'سيتم إخفاء هؤلاء الأعضاء من التطبيق. سجلات الإيرادات والمالية تبقى كما هي.';
+
+  @override
+  String deleteAllExpiredSuccess(int count) {
+    return 'تم حذف $count عضو منتهي';
+  }
 
   @override
   String get userUpdatedSuccess => 'تم تحديث بيانات المستخدم';

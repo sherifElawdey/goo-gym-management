@@ -67,6 +67,9 @@ abstract class GymRepository {
 
   Future<void> deleteUser(String userId);
 
+  /// Soft-deletes users so they vanish from app lists while keeping finance records.
+  Future<int> softDeleteExpiredMembers(List<String> userIds);
+
   Future<List<Subscription>> loadSubscriptions(String userId);
 
   Future<void> renewSubscription({

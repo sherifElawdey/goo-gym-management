@@ -101,6 +101,7 @@ class FirebaseGymRepository implements GymRepository {
       isMember: data['isMember'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       gender: UserGenderFirestore.fromFirestore(data['gender'] as String?),
+      isDeleted: data['isDeleted'] as bool? ?? false,
       activeSubscription: activeSubscription,
     );
   }
@@ -339,13 +340,18 @@ class FirebaseGymRepository implements GymRepository {
     final expenses = await loadExpensesByMonth(today);
     final memberIds = <String>{
       for (final doc in users.docs)
-        if ((doc.data()['isMember'] ?? false) == true) doc.id,
+        if ((doc.data()['isDeleted'] as bool? ?? false) != true &&
+            (doc.data()['isMember'] ?? false) == true)
+          doc.id,
     };
+    final visibleUsers = users.docs
+        .where((doc) => (doc.data()['isDeleted'] as bool? ?? false) != true)
+        .toList();
     final members = memberIds.length;
-    final nonMembers = users.docs.length - members;
+    final nonMembers = visibleUsers.length - members;
     var maleMembers = 0;
     var femaleMembers = 0;
-    for (final doc in users.docs) {
+    for (final doc in visibleUsers) {
       final data = doc.data();
       if ((data['isMember'] ?? false) != true) continue;
       final gender = UserGenderFirestore.fromFirestore(data['gender'] as String?);
@@ -525,6 +531,7 @@ class FirebaseGymRepository implements GymRepository {
         activeSubscription: subscriptionsByUser[doc.id],
       );
     }).where((user) {
+      if (user.isDeleted) return false;
       final q = query.trim().toLowerCase();
       final passesFilter = filter == 'all' ||
           (filter == 'members' && user.isMember) ||
@@ -638,6 +645,56 @@ class FirebaseGymRepository implements GymRepository {
     if (deleteOps.isNotEmpty) {
       await _commitBatches(operations: deleteOps);
     }
+  }
+
+  @override
+  Future<int> softDeleteExpiredMembers(List<String> userIds) async {
+    final uniqueIds = userIds.toSet().where((id) => id.isNotEmpty).toList();
+    if (uniqueIds.isEmpty) return 0;
+
+    final userOps = <void Function(WriteBatch)>[];
+    final subscriptionOps = <void Function(WriteBatch)>[];
+
+    for (final userId in uniqueIds) {
+      final userRef = _firestore.collection('users').doc(userId);
+      final userDoc = await userRef.get();
+      if (!userDoc.exists) continue;
+      final data = userDoc.data();
+      if (data == null) continue;
+      if ((data['isDeleted'] as bool? ?? false) == true) continue;
+
+      final userName = data['name'] as String? ?? '';
+      userOps.add(
+        (batch) => batch.update(userRef, {
+          'isDeleted': true,
+          'isMember': false,
+          'deletedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }),
+      );
+
+      final subscriptions = await _firestore
+          .collection('subscriptions')
+          .where('userId', isEqualTo: userId)
+          .get();
+      for (final doc in subscriptions.docs) {
+        subscriptionOps.add(
+          (batch) => batch.update(doc.reference, {
+            'memberName': userName,
+            'userDeleted': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }),
+        );
+      }
+    }
+
+    if (userOps.isNotEmpty) {
+      await _commitBatches(operations: userOps);
+    }
+    if (subscriptionOps.isNotEmpty) {
+      await _commitBatches(operations: subscriptionOps);
+    }
+    return userOps.length;
   }
 
   @override
