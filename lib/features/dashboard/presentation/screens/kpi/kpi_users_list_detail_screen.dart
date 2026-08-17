@@ -122,6 +122,7 @@ class _KpiUsersListDetailScreenState extends State<KpiUsersListDetailScreen> {
                                                   context,
                                                   user: user,
                                                   usersCubit: widget.usersCubit,
+                                                  onChanged: _load,
                                                 );
                                               }
                                             : null,

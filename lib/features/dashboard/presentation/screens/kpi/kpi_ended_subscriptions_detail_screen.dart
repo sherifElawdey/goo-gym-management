@@ -36,6 +36,7 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
   bool _loading = true;
   String? _endingSubscriptionId;
   bool _deletingAll = false;
+  int _loadToken = 0;
 
   @override
   void initState() {
@@ -43,23 +44,27 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
     _load();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _load({bool showSpinner = true}) async {
+    final token = ++_loadToken;
+    if (showSpinner) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final repo = sl<GymRepository>();
       final stats = await repo.loadDashboardStats();
       final users = await repo.loadUsers(filter: 'members');
-      if (!mounted) return;
+      if (!mounted || token != _loadToken) return;
       setState(() {
         _subscriptions = stats.endedSubscriptions;
         _usersById = {for (final u in users) u.id: u};
         _loading = false;
+        _error = null;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || token != _loadToken) return;
       setState(() {
         _error = AppLogger.userMessage(e);
         _loading = false;
@@ -88,7 +93,7 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
       usersCubit: widget.usersCubit,
       onChanged: () {
         widget.onDataChanged?.call();
-        _load();
+        _load(showSpinner: false);
       },
     );
   }
@@ -96,7 +101,7 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
   Future<void> _confirmEndSubscription(BuildContext context, Subscription sub) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
-    if (_endingSubscriptionId != null || _deletingAll) return;
+    if (_endingSubscriptionId == sub.id || _deletingAll) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -127,15 +132,18 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.subscriptionEnded)),
       );
+      setState(() {
+        _subscriptions = _subscriptions.where((s) => s.userId != sub.userId).toList();
+      });
       widget.onDataChanged?.call();
-      await _load();
+      await _load(showSpinner: false);
     } catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(content: Text(AppLogger.userMessage(e))),
       );
     } finally {
-      if (mounted) {
+      if (mounted && _endingSubscriptionId == sub.id) {
         setState(() => _endingSubscriptionId = null);
       }
     }
@@ -177,7 +185,7 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
         SnackBar(content: Text(l10n.deleteAllExpiredSuccess(count))),
       );
       widget.onDataChanged?.call();
-      await _load();
+      await _load(showSpinner: false);
     } catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
@@ -254,6 +262,7 @@ class _KpiEndedSubscriptionsDetailScreenState extends State<KpiEndedSubscription
                               final name = user?.name ?? l10n.memberDefault;
                               final phone = user?.phone ?? '';
                               return SubscriptionAlertRow(
+                                key: ValueKey(sub.id),
                                 subscription: sub,
                                 name: name,
                                 phone: phone,

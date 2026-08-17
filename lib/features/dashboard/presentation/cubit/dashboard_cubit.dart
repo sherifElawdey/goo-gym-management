@@ -12,14 +12,20 @@ class DashboardCubit extends Cubit<DashboardState> {
         super(DashboardInitialState());
 
   final GymRepository _repository;
+  int _loadToken = 0;
 
-  Future<void> load() async {
-    emit(DashboardLoadingState());
+  Future<void> load({bool silent = false}) async {
+    final token = ++_loadToken;
+    if (!silent && state is! DashboardLoadedState) {
+      emit(DashboardLoadingState());
+    }
     try {
       final stats = await _repository.loadDashboardStats();
+      if (token != _loadToken || isClosed) return;
       emit(DashboardLoadedState(stats: stats));
     } catch (e, stackTrace) {
       AppLogger.error('DashboardCubit.load', e, stackTrace: stackTrace);
+      if (token != _loadToken || isClosed) return;
       emit(DashboardErrorState(message: AppLogger.userMessage(e)));
     }
   }

@@ -18,21 +18,25 @@ class UsersCubit extends Cubit<UsersState> {
   String genderFilter = 'all';
   DateTime? subscriptionMonth;
   String subscriptionSort = 'none';
+  int _loadToken = 0;
 
   static DateTime _currentMonthKey() {
     final now = DateTime.now();
     return DateTime(now.year, now.month, 1);
   }
 
-  Future<void> load() async {
-    emit(UsersLoadingState());
+  Future<void> load({bool silent = false}) async {
     if (filter == 'members' && subscriptionMonth == null) {
       subscriptionMonth = _currentMonthKey();
+    }
+    if (!silent && state is! UsersLoadedState) {
+      emit(UsersLoadingState());
     }
     await _fetchUsers();
   }
 
   Future<void> _fetchUsers() async {
+    final token = ++_loadToken;
     try {
       var allUsers = await _repository.loadUsers(
         query: query,
@@ -47,6 +51,7 @@ class UsersCubit extends Cubit<UsersState> {
       }
 
       final users = _sortUsers(allUsers);
+      if (token != _loadToken || isClosed) return;
 
       emit(
         UsersLoadedState(
@@ -60,6 +65,7 @@ class UsersCubit extends Cubit<UsersState> {
       );
     } catch (e, stackTrace) {
       AppLogger.error('UsersCubit.load', e, stackTrace: stackTrace);
+      if (token != _loadToken || isClosed) return;
       emit(UsersErrorState(message: AppLogger.userMessage(e)));
     }
   }

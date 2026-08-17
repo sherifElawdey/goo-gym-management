@@ -12,7 +12,6 @@ import 'package:gym_pro_manager/domain/entities/models.dart';
 import 'package:gym_pro_manager/domain/repositories/gym_repository.dart';
 import 'package:gym_pro_manager/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:gym_pro_manager/features/dashboard/presentation/screens/kpi/kpi_ended_subscriptions_detail_screen.dart';
-import 'package:gym_pro_manager/features/dashboard/presentation/screens/kpi/kpi_today_attendance_detail_screen.dart';
 import 'package:gym_pro_manager/features/dashboard/presentation/screens/kpi/kpi_users_list_detail_screen.dart';
 import 'package:gym_pro_manager/features/dashboard/presentation/widgets/subscription_alert_row.dart';
 import 'package:gym_pro_manager/features/users/presentation/cubit/users_cubit.dart';
@@ -25,12 +24,10 @@ class HomeDashboardScreen extends StatefulWidget {
     super.key,
     required this.usersCubit,
     required this.onOpenMembersTab,
-    required this.onOpenAttendanceTab,
   });
 
   final UsersCubit usersCubit;
   final void Function(String filter) onOpenMembersTab;
-  final VoidCallback onOpenAttendanceTab;
 
   @override
   State<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
@@ -38,6 +35,7 @@ class HomeDashboardScreen extends StatefulWidget {
 
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   Map<String, GymUser> _usersById = {};
+  int _namesLoadToken = 0;
 
   @override
   void initState() {
@@ -46,9 +44,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Future<void> _loadUserNames() async {
+    final token = ++_namesLoadToken;
     try {
       final users = await sl<GymRepository>().loadUsers();
-      if (!mounted) return;
+      if (!mounted || token != _namesLoadToken) return;
       setState(() {
         _usersById = {for (final u in users) u.id: u};
       });
@@ -78,7 +77,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       user: member,
       usersCubit: widget.usersCubit,
       onChanged: () {
-        context.read<DashboardCubit>().load();
+        context.read<DashboardCubit>().load(silent: true);
         _loadUserNames();
       },
     );
@@ -199,25 +198,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       ),
                     ),
                     (
-                      l10n.visitors,
-                      '${stats.totalNonMembers}',
-                      Icons.person_outline_rounded,
-                      AppColors.primaryLight,
-                      null,
-                      null,
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                          builder: (_) => KpiUsersListDetailScreen(
-                            title: l10n.visitors,
-                            filter: 'non_members',
-                            usersCubit: widget.usersCubit,
-                            onOpenMembersTab: () => widget.onOpenMembersTab('non_members'),
-                          ),
-                        ),
-                      ),
-                    ),
-                    (
                       l10n.maleMembers,
                       '${stats.maleMembers}',
                       Icons.male_rounded,
@@ -264,22 +244,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       ),
                     ),
                     (
-                      l10n.todayAttendance,
-                      '${stats.totalAttendanceToday}',
-                      Icons.fact_check_rounded,
-                      AppColors.primary,
-                      null,
-                      null,
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                          builder: (_) => KpiTodayAttendanceDetailScreen(
-                            onOpenAttendanceTab: widget.onOpenAttendanceTab,
-                          ),
-                        ),
-                      ),
-                    ),
-                    (
                       l10n.endedSubscriptions,
                       '${stats.endedSubscriptions.length}',
                       Icons.event_busy_rounded,
@@ -292,7 +256,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           builder: (_) => KpiEndedSubscriptionsDetailScreen(
                             usersCubit: widget.usersCubit,
                             onDataChanged: () {
-                              context.read<DashboardCubit>().load();
+                              context.read<DashboardCubit>().load(silent: true);
                               _loadUserNames();
                             },
                           ),
@@ -340,6 +304,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   final name = user?.name ?? l10n.memberDefault;
                   final phone = user?.phone ?? '';
                   return SubscriptionAlertRow(
+                    key: ValueKey(sub.id),
                     subscription: sub,
                     name: name,
                     phone: phone,

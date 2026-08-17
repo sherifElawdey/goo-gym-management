@@ -11,8 +11,6 @@ import 'package:gym_pro_manager/core/theme/app_spacing.dart';
 import 'package:gym_pro_manager/core/widgets/branded_app_bar.dart';
 import 'package:gym_pro_manager/core/widgets/theme_mode_icon_buttons.dart';
 import 'package:gym_pro_manager/core/widgets/gradient_background.dart';
-import 'package:gym_pro_manager/features/attendance/presentation/cubit/attendance_cubit.dart';
-import 'package:gym_pro_manager/features/attendance/presentation/screens/attendance_screen.dart';
 import 'package:gym_pro_manager/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:gym_pro_manager/features/auth/presentation/widgets/app_lock_overlay.dart';
 import 'package:gym_pro_manager/features/auth/presentation/widgets/unlock_password_sheet.dart';
@@ -85,7 +83,7 @@ class _MainShellScreenState extends State<MainShellScreen> with WidgetsBindingOb
   void _selectTab(int i) {
     setState(() {
       _index = i;
-      if (i == 3) {
+      if (i == 2) {
         _financeAmountsVisible = false;
       }
     });
@@ -149,18 +147,17 @@ class _MainShellScreenState extends State<MainShellScreen> with WidgetsBindingOb
 
   void _openMembersTab(BuildContext shellContext, String filter) {
     shellContext.read<UsersCubit>().setFilter(filter);
-    _selectTab(2);
+    _selectTab(1);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final titles = [l10n.navHome, l10n.navAttendance, l10n.navMembers, l10n.navFinance];
+    final titles = [l10n.navHome, l10n.navMembers, l10n.navFinance];
 
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => sl<DashboardCubit>()..load()),
-        BlocProvider(create: (_) => sl<AttendanceCubit>()..load()),
         BlocProvider(create: (_) => sl<UsersCubit>()..load()),
         BlocProvider(create: (_) => sl<FinanceCubit>()..load()),
       ],
@@ -204,9 +201,7 @@ class _MainShellScreenState extends State<MainShellScreen> with WidgetsBindingOb
                         HomeDashboardScreen(
                           usersCubit: shellContext.read<UsersCubit>(),
                           onOpenMembersTab: (filter) => _openMembersTab(shellContext, filter),
-                          onOpenAttendanceTab: () => _selectTab(1),
                         ),
-                        const AttendanceScreen(),
                         const UsersScreen(),
                         FinanceScreen(
                           amountsVisible: _financeAmountsVisible,
@@ -220,7 +215,7 @@ class _MainShellScreenState extends State<MainShellScreen> with WidgetsBindingOb
               bottomNavigationBar: _GlassNavBar(
                 index: _index,
                 onChanged: _selectTab,
-                labels: [l10n.navHome, l10n.navAttendance, l10n.navMembers, l10n.navFinance],
+                labels: [l10n.navHome, l10n.navMembers, l10n.navFinance],
               ),
             ),
           );
@@ -283,19 +278,14 @@ class _GlassNavBar extends StatelessWidget {
                     label: labels[0],
                   ),
                   NavigationDestination(
-                    icon: const Icon(Icons.calendar_today_outlined),
-                    selectedIcon: const Icon(Icons.calendar_today_rounded),
-                    label: labels[1],
-                  ),
-                  NavigationDestination(
                     icon: const Icon(Icons.people_outline_rounded),
                     selectedIcon: const Icon(Icons.people_rounded),
-                    label: labels[2],
+                    label: labels[1],
                   ),
                   NavigationDestination(
                     icon: const Icon(Icons.account_balance_wallet_outlined),
                     selectedIcon: const Icon(Icons.account_balance_wallet_rounded),
-                    label: labels[3],
+                    label: labels[2],
                   ),
                 ],
               ),

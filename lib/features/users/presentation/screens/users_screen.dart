@@ -152,6 +152,7 @@ class _UsersScreenState extends State<UsersScreen> {
             itemBuilder: (context, index) {
               final user = state.users[index];
               return Padding(
+                key: ValueKey(user.id),
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: GlassCard(
                   onTap: () {
@@ -159,6 +160,7 @@ class _UsersScreenState extends State<UsersScreen> {
                       context,
                       user: user,
                       usersCubit: context.read<UsersCubit>(),
+                      onChanged: () => context.read<UsersCubit>().load(silent: true),
                     );
                   },
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

@@ -125,9 +125,12 @@ class MemberProfileBodyState extends State<MemberProfileBody> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.subscriptionEnded)),
       );
-      widget.onEnded?.call();
+      setState(() {
+        _user = _user.copyWith(isMember: false, clearSubscription: true);
+        _ending = false;
+      });
       widget.onChanged?.call();
-      if (mounted) Navigator.of(context).pop();
+      await load();
     } catch (e, stackTrace) {
       AppLogger.error('MemberProfileBody.endSubscription', e, stackTrace: stackTrace);
       if (!mounted) return;
